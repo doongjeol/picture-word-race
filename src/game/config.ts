@@ -54,22 +54,31 @@ export const ILLUSTRATIONS: Illustration[] = [
   },
 ];
 
+export const TIMER_MISSIONS: string[] = [
+  "예배실에서 노란색 10초 안에 가리키기",
+  "예배실에서 초록색 10초 안에 가리키기",
+  "10초안에 팀 전체가 키 순서대로 서기",
+  "이름에 ㅎ들어가는 상대 팀원과 하이파이브 하고 오기",
+  "10초 안에 이름에 ㅇ들어가는 선생님과 하이파이브하고 오기",
+];
+
 export const MISSIONS: string[] = [
-  "팀 전체가 동물 소리를 내며 하이파이브하기",
   "팀원 모두 손을 들고 'Hallelujah!' 외치기",
   "팀 이름을 3번 외치기",
   "팀원 모두 제자리에서 3번 점프하기",
-  "포즈 하나를 취하면, 팀원들이 따라하기",
+  "팀원들과 예수님하면 생각나는 것 하나둘셋!하면 포즈취하기 (포즈가 모두 같아야 성공)",
   "가장 큰 목소리로 그동안 배웠던 문장 하나 외치기",
-  "부장 권사님과 가위바위보해서 이기기",
-  "전도사님과 참참참해서 이기기",
+  "부장 선생님과 가위바위보해서 이기기",
+  "전도사님과 가위 바위 보 같은 거 내기",
   "옆 사람에게 칭찬 한 가지 진심으로 해주기",
   '상대 팀에게 "You are great!" 외치기',
-  "상대 팀 전원과 돌아가며 가볍게 하이파이브(또는 주먹 인사) 나누기",
+  "상대 팀 전원과 돌아가며 가볍게 주먹 인사 나누기",
+  ...TIMER_MISSIONS,
 ];
 
 export const BOARD_SIZE = 20; // total tiles around the square (5 per side)
 export const SIDE = 5;
+const KEY_TILE_INDICES = new Set([0, 2, 5, 8, 10, 13, 15, 18]);
 
 export type TileKind = "illustration" | "key";
 export type Tile = {
@@ -78,11 +87,11 @@ export type Tile = {
   illustration?: Illustration;
 };
 
-/** Build a stable board: every 5th tile (0, 5, 10, 15) is a key tile. */
+/** Build a stable board with key tiles at corners and one extra on each side. */
 export function buildBoard(): Tile[] {
   const tiles: Tile[] = [];
   for (let i = 0; i < BOARD_SIZE; i++) {
-    if (i % SIDE === 0) {
+    if (KEY_TILE_INDICES.has(i)) {
       tiles.push({ index: i, kind: "key" });
     } else {
       const ill = ILLUSTRATIONS[i % ILLUSTRATIONS.length];

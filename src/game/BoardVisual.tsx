@@ -7,10 +7,14 @@ import { indexToCell } from "./positions";
 export function BoardVisual({
   state,
   animatedPositions,
+  rolling = false,
+  dice = null,
 }: {
   state: GameState;
   /** Optional override positions used during local hop-by-hop animation. */
   animatedPositions?: Record<TeamId, number>;
+  rolling?: boolean;
+  dice?: number | null;
 }) {
   const positions: Record<TeamId, number> = animatedPositions ?? {
     faith: positionOf(state, "faith"),
@@ -56,10 +60,27 @@ export function BoardVisual({
             Faith vs WorldCup — 한 바퀴 완주하면 승리!
           </p>
         </div>
+        {(rolling || dice != null) && (
+          <div
+            key={`${rolling}-${dice}`}
+            style={{ gridRow: "2 / 6", gridColumn: "2 / 6" }}
+            className="pointer-events-none z-20 flex items-center justify-center"
+          >
+            <div
+              className={`flex aspect-square w-[min(48%,18rem)] items-center justify-center rounded-[2rem] bg-white/95 text-[clamp(5rem,15vw,11rem)] leading-none text-foreground shadow-[var(--shadow-pop)] ring-4 ring-white/60 ${
+                rolling ? "animate-dice-roll" : "animate-pop-in"
+              }`}
+            >
+              {rolling || dice == null ? "🎲" : DICE_FACES[dice - 1]}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
+
+const DICE_FACES = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
 
 function TileCard({ tile, teams }: { tile: Tile; teams: TeamId[] }) {
   const isKey = tile.kind === "key";

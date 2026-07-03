@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import confetti from "canvas-confetti";
 import { QRCodeSVG } from "qrcode.react";
-import { Dices, Eye, Key, RotateCcw, Trophy, Volume2 } from "lucide-react";
-import { TEAMS, type TeamId } from "./config";
+import { Dices, Eye, Key, Play, RotateCcw, Timer, Trophy, Volume2 } from "lucide-react";
+import { MISSIONS, TEAMS, TIMER_MISSIONS, type TeamId } from "./config";
 import { indexToCell } from "./positions";
 import {
   BOARD_SIZE,
@@ -12,7 +12,6 @@ import {
   positionField,
   positionOf,
   otherTeam,
-  randomMission,
   resetGame,
   useGameState,
   type GameState,
@@ -332,10 +331,15 @@ export default function BoardScreen() {
   return (
     <div className="relative h-screen w-full overflow-hidden bg-gradient-to-br from-[oklch(0.97_0.04_200)] via-[oklch(0.98_0.03_95)] to-[oklch(0.95_0.06_320)] p-2 sm:p-3 lg:p-4">
       <div className="mx-auto flex h-full max-w-[1400px] flex-col">
-        <Header turn={state.current_turn} rolling={state.rolling} dice={state.last_dice} />
+        <Header turn={state.current_turn} />
 
         <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_300px]">
-          <BoardVisual state={state} animatedPositions={animPositions ?? undefined} />
+          <BoardVisual
+            state={state}
+            animatedPositions={animPositions ?? undefined}
+            rolling={state.rolling || localRolling}
+            dice={state.last_dice}
+          />
           <Sidebar
             state={state}
             controllerUrl={controllerUrl}
@@ -353,6 +357,7 @@ export default function BoardScreen() {
               setAnimPositions(null);
               lastProcessedRoll.current = null;
               winFiredRef.current = false;
+              resetKeyCardDecks();
               void resetGame(startTeam);
             }}
           />
@@ -383,6 +388,7 @@ export default function BoardScreen() {
             setAnimPositions(null);
             lastProcessedRoll.current = null;
             winFiredRef.current = false;
+            resetKeyCardDecks();
             void resetGame(startTeam);
           }}
         />
@@ -391,30 +397,12 @@ export default function BoardScreen() {
   );
 }
 
-function Header({
-  turn,
-  rolling,
-  dice,
-}: {
-  turn: TeamId;
-  rolling: boolean;
-  dice: number | null;
-}) {
+function Header({ turn }: { turn: TeamId }) {
   const t = TEAMS[turn];
   const color = turn === "faith" ? "bg-team-faith" : "bg-team-soccer";
   return (
     <header className="pointer-events-none absolute right-2 top-2 z-20 flex items-center justify-end gap-2 sm:right-3 sm:top-3 lg:right-4 lg:top-4">
       <div className="flex items-center gap-2 sm:gap-3">
-        {(rolling || dice != null) && (
-          <div
-            className={`flex h-10 w-10 items-center justify-center rounded-xl bg-white text-2xl shadow-inner sm:h-12 sm:w-12 sm:text-3xl ${
-              rolling ? "animate-dice-roll" : "animate-pop-in"
-            }`}
-            key={`${rolling}-${dice}`}
-          >
-            {rolling || dice == null ? "🎲" : DICE_FACES[dice - 1]}
-          </div>
-        )}
         <div
           key={turn}
           className={`animate-pop-in flex items-center gap-2 rounded-full ${color} px-4 py-2 text-white shadow-[var(--shadow-pop)] sm:px-5`}
@@ -869,6 +857,7 @@ function KeyModal({
 }) {
   const t = TEAMS[team];
   const isPenalty = penaltySteps != null;
+  const isTimerMission = mission != null && TIMER_MISSIONS.includes(mission);
   return (
     <ModalShell team={team}>
       <div className="flex flex-col items-center text-center">
@@ -898,6 +887,7 @@ function KeyModal({
             <p className="mt-6 text-2xl font-bold leading-snug text-foreground sm:text-3xl">
               {mission}
             </p>
+            {isTimerMission && <TimerPanel />}
             <div className="mt-8 grid w-full grid-cols-2 gap-3">
               <button
                 onClick={() => onResult(false)}
@@ -957,6 +947,64 @@ function MissionModal({
         </div>
       </div>
     </ModalShell>
+  );
+}
+
+function TimerPanel() {
+  const total = 10;
+  const [timeLeft, setTimeLeft] = useState(total);
+  const [running, setRunning] = useState(false);
+
+  useEffect(() => {
+    if (!running) return;
+    if (timeLeft <= 0) {
+      setRunning(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setTimeLeft((current) => current - 1), 1000);
+    return () => window.clearTimeout(timer);
+  }, [running, timeLeft]);
+
+  const reset = () => {
+    setRunning(false);
+    setTimeLeft(total);
+  };
+
+  return (
+    <div className="mt-5 w-full rounded-2xl bg-white/80 p-4 text-foreground shadow-inner ring-1 ring-black/5">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-muted-foreground">
+          <Timer className="h-4 w-4" />
+          Timer
+        </div>
+        <div className="text-4xl font-black tabular-nums text-key">{timeLeft}</div>
+      </div>
+      <div className="mt-3 h-3 overflow-hidden rounded-full bg-muted">
+        <div
+          className="h-full rounded-full bg-key transition-all duration-300"
+          style={{ width: `${(timeLeft / total) * 100}%` }}
+        />
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={() => setRunning(true)}
+          disabled={running || timeLeft === 0}
+          className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-key px-3 py-2 text-sm font-bold text-white shadow transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+        >
+          <Play className="h-4 w-4" />
+          시작
+        </button>
+        <button
+          type="button"
+          onClick={reset}
+          className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-white px-3 py-2 text-sm font-bold text-foreground shadow ring-1 ring-black/5 transition hover:-translate-y-0.5"
+        >
+          <RotateCcw className="h-4 w-4" />
+          리셋
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -1043,20 +1091,81 @@ function buildKeyCard(
   includePenaltyCards: boolean,
   rollSeed: number | null,
 ): ModalState {
-  const first = seededFraction(`${team}:${rollSeed ?? Date.now()}:kind`);
-  if (includePenaltyCards && first < 1 / 3) {
-    return {
-      kind: "key",
-      penaltySteps: seededFraction(`${team}:${rollSeed ?? Date.now()}:penalty`) < 0.5 ? 1 : 2,
-      team,
-    };
-  }
-  const missionSeed = seededFraction(`${team}:${rollSeed ?? Date.now()}:mission`);
-  return { kind: "key", mission: randomMission(missionSeed), team };
+  const item = drawKeyCardItem(includePenaltyCards, `${team}:${rollSeed ?? Date.now()}`);
+  if (item.type === "penalty") return { kind: "key", penaltySteps: item.steps, team };
+  return { kind: "key", mission: item.mission, team };
 }
 
 function createRollSeed(dice: number) {
   return Date.now() * 10 + dice;
+}
+
+type KeyCardItem =
+  | { id: string; type: "mission"; mission: string }
+  | { id: string; type: "penalty"; steps: 1 | 2 };
+
+const KEY_CARD_DECK_STORAGE_PREFIX = "picture-word-race:key-card-deck:v1";
+
+function drawKeyCardItem(includePenaltyCards: boolean, seed: string): KeyCardItem {
+  const items = buildKeyCardItems(includePenaltyCards);
+  const itemById = new Map(items.map((item) => [item.id, item]));
+  const storageKey = `${KEY_CARD_DECK_STORAGE_PREFIX}:${includePenaltyCards ? "with-penalty" : "mission-only"}`;
+  const storedDeck = readKeyCardDeck(storageKey).filter((id) => itemById.has(id));
+  const missingIds = items.map((item) => item.id).filter((id) => !storedDeck.includes(id));
+  const deck = [...storedDeck, ...shuffleIds(missingIds, seed)];
+  const selectedId = deck[0] ?? shuffleIds(items.map((item) => item.id), seed)[0];
+  const nextDeck = [...deck.filter((id) => id !== selectedId), selectedId];
+
+  writeKeyCardDeck(storageKey, nextDeck);
+  return itemById.get(selectedId) ?? items[0];
+}
+
+function buildKeyCardItems(includePenaltyCards: boolean): KeyCardItem[] {
+  const missionCards: KeyCardItem[] = MISSIONS.map((mission, index) => ({
+    id: `mission:${index}:${mission}`,
+    type: "mission",
+    mission,
+  }));
+  if (!includePenaltyCards) return missionCards;
+  return [
+    ...missionCards,
+    { id: "penalty:1", type: "penalty", steps: 1 },
+    { id: "penalty:2", type: "penalty", steps: 2 },
+  ];
+}
+
+function readKeyCardDeck(storageKey: string): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(storageKey);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter((value): value is string => typeof value === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeKeyCardDeck(storageKey: string, deck: string[]) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(storageKey, JSON.stringify(deck));
+  } catch {
+    // If storage is unavailable, the current draw still works; only the order memory is lost.
+  }
+}
+
+function resetKeyCardDecks() {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(`${KEY_CARD_DECK_STORAGE_PREFIX}:mission-only`);
+    window.localStorage.removeItem(`${KEY_CARD_DECK_STORAGE_PREFIX}:with-penalty`);
+  } catch {
+    // Ignore storage errors during reset.
+  }
+}
+
+function shuffleIds(ids: string[], seed: string): string[] {
+  return [...ids].sort((a, b) => seededFraction(`${seed}:${a}`) - seededFraction(`${seed}:${b}`));
 }
 
 function seededFraction(value: string): number {
