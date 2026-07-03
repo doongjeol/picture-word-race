@@ -93,13 +93,33 @@ export async function patchGame(patch: Partial<GameState>) {
   await supabase.from("game_state").update(patch as any).eq("id", 1);
 }
 
+export async function claimRollProcessing(dice: number, rollSeed: number | null): Promise<boolean> {
+  const nextSeed = rollSeed == null ? -Date.now() : -Math.abs(rollSeed);
+  let query = supabase
+    .from("game_state")
+    .update({ reveal_dice_at: nextSeed })
+    .eq("id", 1)
+    .eq("last_dice", dice);
+
+  query = rollSeed == null
+    ? query.is("reveal_dice_at", null)
+    : query.eq("reveal_dice_at", Math.abs(rollSeed));
+
+  const { data } = await query.select("id").maybeSingle();
+  return data != null;
+}
+
 export async function resetGame(startTeam: TeamId = "faith") {
   await patchGame({ ...INITIAL_STATE, current_turn: startTeam });
 }
 
 /** Utility: pick a random mission string. */
-export function randomMission(): string {
-  return MISSIONS[Math.floor(Math.random() * MISSIONS.length)];
+export function randomMission(seed?: number): string {
+  const index =
+    seed == null
+      ? Math.floor(Math.random() * MISSIONS.length)
+      : Math.floor(seed * MISSIONS.length) % MISSIONS.length;
+  return MISSIONS[index];
 }
 
 /** Board tiles, memo-safe (pure). */

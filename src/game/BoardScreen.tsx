@@ -7,6 +7,7 @@ import { indexToCell } from "./positions";
 import {
   BOARD_SIZE,
   BOARD_TILES,
+  claimRollProcessing,
   patchGame,
   positionField,
   positionOf,
@@ -43,6 +44,7 @@ export default function BoardScreen() {
     }
     if (state.rolling) return; // still rolling on controller
     if (consumedDiceRef.current === state.last_dice) return;
+    if (state.reveal_dice_at != null && state.reveal_dice_at < 0) return;
     if (state.modal.kind !== "idle") return;
 
     const sig = { dice: state.last_dice, turn: state.current_turn };
@@ -53,13 +55,24 @@ export default function BoardScreen() {
     )
       return;
     if (animatingRef.current) return;
-    animatingRef.current = true;
-    lastProcessedRoll.current = sig;
-    void runAdvance(state, sig.dice, sig.turn).finally(() => {
-      animatingRef.current = false;
-    });
+    void (async () => {
+      const claimed = await claimRollProcessing(sig.dice, state.reveal_dice_at);
+      if (!claimed || animatingRef.current) return;
+      animatingRef.current = true;
+      lastProcessedRoll.current = sig;
+      await runAdvance(state, sig.dice, sig.turn).finally(() => {
+        animatingRef.current = false;
+      });
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state?.last_dice, state?.rolling, state?.current_turn, state?.modal.kind, state?.winner]);
+  }, [
+    state?.last_dice,
+    state?.rolling,
+    state?.current_turn,
+    state?.modal.kind,
+    state?.winner,
+    state?.reveal_dice_at,
+  ]);
 
   useEffect(() => {
     if (!state || !pendingAnimPositionsRef.current) return;
@@ -100,6 +113,7 @@ export default function BoardScreen() {
           modal: { kind: "win", team },
           last_dice: null,
           rolling: false,
+          reveal_dice_at: null,
         } as Partial<GameState>);
         return;
       }
@@ -110,13 +124,14 @@ export default function BoardScreen() {
     const modal: ModalState =
       tile.kind === "illustration"
         ? { kind: "illustration", tileIndex: landedIndex, team }
-        : buildKeyCard(team, keyPenaltyCards);
+        : buildKeyCard(team, keyPenaltyCards, base.reveal_dice_at);
     pendingAnimPositionsRef.current = { ...other };
     await patchGame({
       [positionField(team)]: landedIndex,
       modal,
       last_dice: null,
       rolling: false,
+      reveal_dice_at: null,
     } as Partial<GameState>);
   };
 
@@ -141,6 +156,7 @@ export default function BoardScreen() {
         current_turn: otherTeam(team),
         last_dice: null,
         rolling: false,
+        reveal_dice_at: null,
       } as Partial<GameState>);
     } finally {
       modalActionRef.current = false;
@@ -166,6 +182,7 @@ export default function BoardScreen() {
           current_turn: otherTeam(team),
           last_dice: null,
           rolling: false,
+          reveal_dice_at: null,
         });
         return;
       }
@@ -180,6 +197,7 @@ export default function BoardScreen() {
           modal: { kind: "win", team },
           last_dice: null,
           rolling: false,
+          reveal_dice_at: null,
         } as Partial<GameState>);
         return;
       }
@@ -201,6 +219,7 @@ export default function BoardScreen() {
         modal: { kind: "idle" },
         last_dice: null,
         rolling: false,
+        reveal_dice_at: null,
       } as Partial<GameState>);
     } finally {
       modalActionRef.current = false;
@@ -218,10 +237,10 @@ export default function BoardScreen() {
   const handleRoll = async () => {
     if (manualMode || isRollBusy) return;
     setLocalRolling(true);
-    await patchGame({ rolling: true, last_dice: null });
+    await patchGame({ rolling: true, last_dice: null, reveal_dice_at: null });
     await sleep(900);
     const value = 1 + Math.floor(Math.random() * 6);
-    await patchGame({ rolling: false, last_dice: value });
+    await patchGame({ rolling: false, last_dice: value, reveal_dice_at: createRollSeed(value) });
     setLocalRolling(false);
   };
 
@@ -234,8 +253,13 @@ export default function BoardScreen() {
     const modal: ModalState =
       tile.kind === "illustration"
         ? { kind: "illustration", tileIndex, team }
-        : buildKeyCard(team, keyPenaltyCards);
-    await patchGame({ modal, last_dice: null, rolling: false } as Partial<GameState>);
+        : buildKeyCard(team, keyPenaltyCards, Date.now());
+    await patchGame({
+      modal,
+      last_dice: null,
+      rolling: false,
+      reveal_dice_at: null,
+    } as Partial<GameState>);
   };
 
   const handleManualAdvance = async (team: TeamId, steps: number) => {
@@ -250,6 +274,7 @@ export default function BoardScreen() {
       modal: { kind: "idle" },
       last_dice: null,
       rolling: false,
+      reveal_dice_at: null,
     });
     const base: GameState = {
       ...state,
@@ -258,6 +283,7 @@ export default function BoardScreen() {
       modal: { kind: "idle" },
       last_dice: null,
       rolling: false,
+      reveal_dice_at: null,
     };
     await runAdvance(base, clampedSteps, team).finally(() => {
       animatingRef.current = false;
@@ -286,6 +312,7 @@ export default function BoardScreen() {
       modal: { kind: "idle" },
       last_dice: null,
       rolling: false,
+      reveal_dice_at: null,
     } as Partial<GameState>);
   };
 
@@ -813,7 +840,7 @@ function IllustrationModal({
             onClick={() => onAnswer(false)}
             className="rounded-2xl bg-white px-6 py-4 text-lg font-bold text-destructive shadow ring-2 ring-destructive/30 transition hover:-translate-y-0.5 hover:ring-destructive"
           >
-            ✗ 오답
+            듣기 사용
           </button>
           <button
             onClick={() => onAnswer(true)}
@@ -1011,15 +1038,34 @@ function WinModal({ team, onReset }: { team: TeamId; onReset: (startTeam: TeamId
   );
 }
 
-function buildKeyCard(team: TeamId, includePenaltyCards: boolean): ModalState {
-  if (includePenaltyCards && Math.random() < 1 / 3) {
+function buildKeyCard(
+  team: TeamId,
+  includePenaltyCards: boolean,
+  rollSeed: number | null,
+): ModalState {
+  const first = seededFraction(`${team}:${rollSeed ?? Date.now()}:kind`);
+  if (includePenaltyCards && first < 1 / 3) {
     return {
       kind: "key",
-      penaltySteps: Math.random() < 0.5 ? 1 : 2,
+      penaltySteps: seededFraction(`${team}:${rollSeed ?? Date.now()}:penalty`) < 0.5 ? 1 : 2,
       team,
     };
   }
-  return { kind: "key", mission: randomMission(), team };
+  const missionSeed = seededFraction(`${team}:${rollSeed ?? Date.now()}:mission`);
+  return { kind: "key", mission: randomMission(missionSeed), team };
+}
+
+function createRollSeed(dice: number) {
+  return Date.now() * 10 + dice;
+}
+
+function seededFraction(value: string): number {
+  let hash = 2166136261;
+  for (let i = 0; i < value.length; i++) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) / 4294967296;
 }
 
 function sleep(ms: number) {

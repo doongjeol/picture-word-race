@@ -43,11 +43,11 @@ export default function ControllerScreen() {
   const handleRoll = async () => {
     if (isBusy) return;
     setLocalRolling(true);
-    await patchGame({ rolling: true, last_dice: null });
+    await patchGame({ rolling: true, last_dice: null, reveal_dice_at: null });
     // Show a fake spinning animation for ~1s, then commit result.
     await new Promise((r) => setTimeout(r, 900));
     const value = 1 + Math.floor(Math.random() * 6);
-    await patchGame({ rolling: false, last_dice: value });
+    await patchGame({ rolling: false, last_dice: value, reveal_dice_at: createRollSeed(value) });
     setLocalRolling(false);
   };
 
@@ -121,4 +121,8 @@ export default function ControllerScreen() {
       </footer>
     </div>
   );
+}
+
+function createRollSeed(dice: number) {
+  return Date.now() * 10 + dice;
 }
