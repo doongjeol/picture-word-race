@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import confetti from "canvas-confetti";
 import { QRCodeSVG } from "qrcode.react";
-import { Key, RotateCcw, Trophy } from "lucide-react";
+import { Key, RotateCcw, Trophy, Volume2 } from "lucide-react";
 import { TEAMS, type TeamId } from "./config";
 import { indexToCell } from "./positions";
 import {
@@ -149,11 +149,11 @@ export default function BoardScreen() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-[oklch(0.97_0.04_200)] via-[oklch(0.98_0.03_95)] to-[oklch(0.95_0.06_320)] p-4 sm:p-8">
-      <div className="mx-auto flex max-w-[1400px] flex-col gap-6">
+    <div className="relative h-screen w-full overflow-hidden bg-gradient-to-br from-[oklch(0.97_0.04_200)] via-[oklch(0.98_0.03_95)] to-[oklch(0.95_0.06_320)] p-2 sm:p-3 lg:p-4">
+      <div className="mx-auto flex h-full max-w-[1400px] flex-col">
         <Header turn={state.current_turn} rolling={state.rolling} dice={state.last_dice} />
 
-        <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+        <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_300px]">
           <BoardVisual state={state} animatedPositions={animPositions ?? undefined} />
           <Sidebar
             state={state}
@@ -207,17 +207,11 @@ function Header({
   const t = TEAMS[turn];
   const color = turn === "faith" ? "bg-team-faith" : "bg-team-soccer";
   return (
-    <header className="flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-white/70 px-6 py-4 shadow-[var(--shadow-soft)] backdrop-blur">
-      <div>
-        <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-          JEBS English Worship
-        </p>
-        <h1 className="text-2xl font-bold text-foreground sm:text-3xl">영어 보드게임</h1>
-      </div>
-      <div className="flex items-center gap-4">
+    <header className="pointer-events-none absolute right-2 top-2 z-20 flex items-center justify-end gap-2 sm:right-3 sm:top-3 lg:right-4 lg:top-4">
+      <div className="flex items-center gap-2 sm:gap-3">
         {(rolling || dice != null) && (
           <div
-            className={`flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-4xl shadow-inner ${
+            className={`flex h-10 w-10 items-center justify-center rounded-xl bg-white text-2xl shadow-inner sm:h-12 sm:w-12 sm:text-3xl ${
               rolling ? "animate-dice-roll" : "animate-pop-in"
             }`}
             key={`${rolling}-${dice}`}
@@ -227,10 +221,10 @@ function Header({
         )}
         <div
           key={turn}
-          className={`animate-pop-in flex items-center gap-3 rounded-full ${color} px-6 py-3 text-white shadow-[var(--shadow-pop)]`}
+          className={`animate-pop-in flex items-center gap-2 rounded-full ${color} px-4 py-2 text-white shadow-[var(--shadow-pop)] sm:px-5`}
         >
-          <span className="text-2xl">{t.emoji}</span>
-          <span className="text-lg font-bold sm:text-xl">지금은 {t.name} 팀 차례!</span>
+          <span className="text-lg sm:text-xl">{t.emoji}</span>
+          <span className="text-sm font-bold sm:text-base">지금은 {t.name} 팀 차례!</span>
         </div>
       </div>
     </header>
@@ -247,12 +241,12 @@ function Sidebar({
   onReset: () => void;
 }) {
   return (
-    <aside className="flex flex-col gap-4">
-      <div className="rounded-3xl bg-white/80 p-5 shadow-[var(--shadow-soft)] backdrop-blur">
+    <aside className="flex min-h-0 flex-col gap-3">
+      <div className="rounded-2xl bg-white/80 p-4 shadow-[var(--shadow-soft)] backdrop-blur">
         <p className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
           Progress
         </p>
-        <div className="mt-3 space-y-3">
+        <div className="mt-2 space-y-2">
           {(["faith", "soccer"] as TeamId[]).map((t) => {
             const pos = positionOf(state, t);
             const pct = (pos / BOARD_SIZE) * 100;
@@ -280,13 +274,13 @@ function Sidebar({
       </div>
 
       {controllerUrl && (
-        <div className="rounded-3xl bg-white/90 p-4 shadow-[var(--shadow-soft)]">
+        <div className="rounded-2xl bg-white/90 p-3 shadow-[var(--shadow-soft)]">
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
             📱 컨트롤러 QR
           </p>
-          <div className="mt-3 flex items-center gap-3">
+          <div className="mt-2 flex items-center gap-3">
             <div className="rounded-xl bg-white p-2 ring-1 ring-black/5">
-              <QRCodeSVG value={controllerUrl} size={96} />
+              <QRCodeSVG value={controllerUrl} size={88} />
             </div>
             <div className="min-w-0 text-xs text-muted-foreground">
               <p className="font-semibold text-foreground">스마트폰으로 스캔</p>
@@ -298,7 +292,7 @@ function Sidebar({
 
       <button
         onClick={onReset}
-        className="flex items-center justify-center gap-2 rounded-2xl border-2 border-foreground/10 bg-white/70 px-4 py-3 text-base font-bold text-foreground transition hover:-translate-y-0.5 hover:bg-white"
+        className="flex items-center justify-center gap-2 rounded-2xl border-2 border-foreground/10 bg-white/70 px-4 py-2.5 text-base font-bold text-foreground transition hover:-translate-y-0.5 hover:bg-white"
       >
         <RotateCcw className="h-5 w-5" />
         게임 초기화 / 다시하기
@@ -332,6 +326,7 @@ function IllustrationModal({
 }) {
   const tile = BOARD_TILES[tileIndex];
   const t = TEAMS[team];
+  const audioRef = useRef<HTMLAudioElement>(null);
   if (!tile.illustration) return null;
   return (
     <ModalShell team={team}>
@@ -349,6 +344,19 @@ function IllustrationModal({
         <p className="mt-3 text-xs text-muted-foreground">
           진행자용 힌트: <span className="font-semibold">{tile.illustration.hint}</span>
         </p>
+        <audio ref={audioRef} src={tile.illustration.audioSrc} preload="auto" />
+        <button
+          onClick={() => {
+            const audio = audioRef.current;
+            if (!audio) return;
+            audio.currentTime = 0;
+            void audio.play();
+          }}
+          className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-base font-bold text-foreground shadow ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:bg-white/90"
+        >
+          <Volume2 className="h-5 w-5" />
+          문장 듣기
+        </button>
         <div className="mt-6 grid w-full grid-cols-2 gap-3">
           <button
             onClick={() => onAnswer(false)}

@@ -5,18 +5,19 @@
 export type Illustration = {
   id: string;
   src: string;
+  audioSrc: string;
   /** English sentence hint (shown small under the image for the teacher). */
   hint: string;
 };
 
 export const ILLUSTRATIONS: Illustration[] = [
-  { id: "apple", src: "/images/illustrations/01.svg", hint: "This is an apple." },
-  { id: "dog", src: "/images/illustrations/02.svg", hint: "I have a dog." },
-  { id: "house", src: "/images/illustrations/03.svg", hint: "This is my house." },
-  { id: "sun", src: "/images/illustrations/04.svg", hint: "The sun is bright." },
-  { id: "book", src: "/images/illustrations/05.svg", hint: "I read a book." },
-  { id: "star", src: "/images/illustrations/06.svg", hint: "Look at the star!" },
-  { id: "tree", src: "/images/illustrations/07.svg", hint: "The tree is tall." },
+  { id: "apple", src: "/images/illustrations/illust1.PNG", audioSrc: "/audio/1.mp3", hint: "This is an apple." },
+  { id: "dog", src: "/images/illustrations/illust2.PNG", audioSrc: "/audio/2.mp3", hint: "I have a dog." },
+  { id: "house", src: "/images/illustrations/illust3.PNG", audioSrc: "/audio/3.mp3", hint: "This is my house." },
+  { id: "sun", src: "/images/illustrations/illust4.PNG", audioSrc: "/audio/4.mp3", hint: "The sun is bright." },
+  { id: "book", src: "/images/illustrations/illust5.PNG", audioSrc: "/audio/5.mp3", hint: "I read a book." },
+  { id: "star", src: "/images/illustrations/illust6.PNG", audioSrc: "/audio/6.mp3", hint: "Look at the star!" },
+  { id: "tree", src: "/images/illustrations/illust7.PNG", audioSrc: "/audio/7.mp3", hint: "The tree is tall." },
 ];
 
 export const MISSIONS: string[] = [

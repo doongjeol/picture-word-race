@@ -18,9 +18,9 @@ export function BoardVisual({
   };
 
   return (
-    <div className="rounded-[2rem] bg-board-bg p-4 shadow-[var(--shadow-soft)] sm:p-6">
+    <div className="flex h-full min-h-0 w-full items-center justify-center rounded-[2rem] bg-board-bg p-2 shadow-[var(--shadow-soft)] sm:p-3">
       <div
-        className="relative mx-auto grid aspect-square w-full max-w-[900px]"
+        className="relative mx-auto grid aspect-square w-[min(100%,calc(100dvh-2.75rem))] max-w-[1040px]"
         style={{
           gridTemplateRows: "repeat(6, 1fr)",
           gridTemplateColumns: "repeat(6, 1fr)",
