@@ -30,13 +30,19 @@ export default function BoardScreen() {
   const animatingRef = useRef(false);
   const pendingAnimPositionsRef = useRef<Record<TeamId, number> | null>(null);
   const lastProcessedRoll = useRef<{ dice: number; turn: TeamId } | null>(null);
+  const consumedDiceRef = useRef<number | null>(null);
+  const modalActionRef = useRef(false);
   const winFiredRef = useRef(false);
 
   // React to new dice rolls: animate the current-turn pawn.
   useEffect(() => {
     if (!state || state.winner) return;
+    if (state.last_dice == null) {
+      consumedDiceRef.current = null;
+      return;
+    }
     if (state.rolling) return; // still rolling on controller
-    if (state.last_dice == null) return;
+    if (consumedDiceRef.current === state.last_dice) return;
     if (state.modal.kind !== "idle") return;
 
     const sig = { dice: state.last_dice, turn: state.current_turn };
@@ -116,6 +122,8 @@ export default function BoardScreen() {
 
   const handleKeyPenalty = async (steps: 1 | 2) => {
     if (!state || state.modal.kind !== "key" || !("penaltySteps" in state.modal)) return;
+    if (modalActionRef.current) return;
+    modalActionRef.current = true;
     const team = state.modal.team;
     const next = Math.max(0, positionOf(state, team) - steps);
     const nextPositions: Record<TeamId, number> = {
@@ -126,51 +134,77 @@ export default function BoardScreen() {
     setAnimPositions(nextPositions);
     await sleep(240);
     pendingAnimPositionsRef.current = nextPositions;
-    await patchGame({
-      [positionField(team)]: next,
-      modal: { kind: "idle" },
-      current_turn: otherTeam(team),
-      last_dice: null,
-      rolling: false,
-    } as Partial<GameState>);
+    try {
+      await patchGame({
+        [positionField(team)]: next,
+        modal: { kind: "idle" },
+        current_turn: otherTeam(team),
+        last_dice: null,
+        rolling: false,
+      } as Partial<GameState>);
+    } finally {
+      modalActionRef.current = false;
+    }
   };
 
   const handleModalResult = async (bonus: boolean) => {
     if (!state) return;
-    const team = state.current_turn;
-    if (!bonus) {
-      await patchGame({ modal: { kind: "idle" }, current_turn: otherTeam(team) });
-      return;
+    if (modalActionRef.current) return;
+    modalActionRef.current = true;
+    const team =
+      state.modal.kind === "illustration" || state.modal.kind === "key"
+        ? state.modal.team
+        : state.current_turn;
+    if (state.last_dice != null) {
+      lastProcessedRoll.current = { dice: state.last_dice, turn: state.current_turn };
+      consumedDiceRef.current = state.last_dice;
     }
-    // +1 bonus advance
-    await patchGame({ modal: { kind: "idle" } });
-    const start = positionOf(state, team);
-    const raw = start + 1;
-    const wrapped = raw % BOARD_SIZE;
-    if (raw >= BOARD_SIZE) {
+    try {
+      if (!bonus) {
+        await patchGame({
+          modal: { kind: "idle" },
+          current_turn: otherTeam(team),
+          last_dice: null,
+          rolling: false,
+        });
+        return;
+      }
+      // +1 bonus advance
+      const start = positionOf(state, team);
+      const raw = start + 1;
+      const wrapped = raw % BOARD_SIZE;
+      if (raw >= BOARD_SIZE) {
+        await patchGame({
+          [positionField(team)]: wrapped,
+          winner: team,
+          modal: { kind: "win", team },
+          last_dice: null,
+          rolling: false,
+        } as Partial<GameState>);
+        return;
+      }
+      // Show local hop animation
+      setAnimPositions({
+        faith: state.faith_pos,
+        soccer: state.soccer_pos,
+        [team]: wrapped,
+      } as Record<TeamId, number>);
+      await sleep(240);
+      pendingAnimPositionsRef.current = {
+        faith: state.faith_pos,
+        soccer: state.soccer_pos,
+        [team]: wrapped,
+      } as Record<TeamId, number>;
       await patchGame({
         [positionField(team)]: wrapped,
-        winner: team,
-        modal: { kind: "win", team },
+        current_turn: otherTeam(team),
+        modal: { kind: "idle" },
+        last_dice: null,
+        rolling: false,
       } as Partial<GameState>);
-      return;
+    } finally {
+      modalActionRef.current = false;
     }
-    // Show local hop animation
-    setAnimPositions({
-      faith: state.faith_pos,
-      soccer: state.soccer_pos,
-      [team]: wrapped,
-    } as Record<TeamId, number>);
-    await sleep(240);
-    pendingAnimPositionsRef.current = {
-      faith: state.faith_pos,
-      soccer: state.soccer_pos,
-      [team]: wrapped,
-    } as Record<TeamId, number>;
-    await patchGame({
-      [positionField(team)]: wrapped,
-      current_turn: otherTeam(team),
-    } as Partial<GameState>);
   };
 
   const isRollBusy =
