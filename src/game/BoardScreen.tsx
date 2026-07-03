@@ -444,6 +444,7 @@ function Sidebar({
 }) {
   const [showManualControls, setShowManualControls] = useState(false);
   const [showGameOptions, setShowGameOptions] = useState(false);
+  const [showControllerQr, setShowControllerQr] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [resetStartTeam, setResetStartTeam] = useState<TeamId>(state.current_turn);
   const [manualSteps, setManualSteps] = useState("1");
@@ -710,9 +711,16 @@ function Sidebar({
 
       {controllerUrl && (
         <div className="rounded-2xl bg-white/90 p-3 shadow-[var(--shadow-soft)]">
-          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            📱 컨트롤러 QR
-          </p>
+          <button
+            type="button"
+            onClick={() => setShowControllerQr((open) => !open)}
+            className="flex w-full items-center justify-between gap-2 text-left text-xs font-bold uppercase tracking-widest text-muted-foreground"
+          >
+            <span>📱 컨트롤러 QR</span>
+            <span className="text-base leading-none">{showControllerQr ? "−" : "+"}</span>
+          </button>
+          {showControllerQr && (
+            <>
           <div className="mt-2 flex items-center gap-3">
             <div className="rounded-xl bg-white p-2 ring-1 ring-black/5">
               <QRCodeSVG value={controllerUrl} size={88} />
@@ -722,6 +730,8 @@ function Sidebar({
               <p className="mt-1 break-all">{controllerUrl}</p>
             </div>
           </div>
+            </>
+          )}
         </div>
       )}
 
