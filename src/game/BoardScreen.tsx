@@ -884,7 +884,7 @@ function KeyModal({
           </>
         ) : (
           <>
-            <p className="mt-6 text-2xl font-bold leading-snug text-foreground sm:text-3xl">
+            <p className="mt-6 whitespace-pre-line text-2xl font-bold leading-snug text-foreground sm:text-3xl">
               {mission}
             </p>
             {isTimerMission && <TimerPanel />}
@@ -928,7 +928,7 @@ function MissionModal({
         <p className="mt-3 text-sm font-bold uppercase tracking-widest text-muted-foreground">
           {t.emoji} {t.name}
         </p>
-        <p className="mt-6 text-2xl font-bold leading-snug text-foreground sm:text-3xl">
+        <p className="mt-6 whitespace-pre-line text-2xl font-bold leading-snug text-foreground sm:text-3xl">
           {mission}
         </p>
         <div className="mt-8 grid w-full grid-cols-2 gap-3">

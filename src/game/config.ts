@@ -55,24 +55,24 @@ export const ILLUSTRATIONS: Illustration[] = [
 ];
 
 export const TIMER_MISSIONS: string[] = [
-  "예배실에서 노란색 10초 안에 가리키기",
-  "예배실에서 초록색 10초 안에 가리키기",
-  "10초안에 팀 전체가 키 순서대로 서기",
-  "이름에 ㅎ들어가는 상대 팀원과 하이파이브 하고 오기",
-  "10초 안에 이름에 ㅇ들어가는 선생님과 하이파이브하고 오기",
+  "Point to something yellow in the worship room within 10 seconds.\n예배실에서 노란색 10초 안에 가리키기",
+  "Point to something green in the worship room within 10 seconds.\n예배실에서 초록색 10초 안에 가리키기",
+  "Line up by height as a team within 10 seconds.\n10초안에 팀 전체가 키 순서대로 서기",
+  "High-five an opponent whose name includes ㅎ.\n이름에 ㅎ들어가는 상대 팀원과 하이파이브 하고 오기",
+  "High-five a teacher whose name includes ㅇ within 10 seconds.\n10초 안에 이름에 ㅇ들어가는 선생님과 하이파이브하고 오기",
 ];
 
 export const MISSIONS: string[] = [
-  "팀원 모두 손을 들고 'Hallelujah!' 외치기",
-  "팀 이름을 3번 외치기",
-  "팀원 모두 제자리에서 3번 점프하기",
-  "팀원들과 예수님하면 생각나는 것 하나둘셋!하면 포즈취하기 (포즈가 모두 같아야 성공)",
-  "가장 큰 목소리로 그동안 배웠던 문장 하나 외치기",
-  "부장 선생님과 가위바위보해서 이기기",
-  "전도사님과 가위 바위 보 같은 거 내기",
-  "옆 사람에게 칭찬 한 가지 진심으로 해주기",
-  '상대 팀에게 "You are great!" 외치기',
-  "상대 팀 전원과 돌아가며 가볍게 주먹 인사 나누기",
+  "Raise your hands and shout 'Hallelujah!' together.\n팀원 모두 손을 들고 'Hallelujah!' 외치기",
+  "Shout your team name three times.\n팀 이름을 3번 외치기",
+  "Everyone on the team jumps in place three times.\n팀원 모두 제자리에서 3번 점프하기",
+  "Strike a pose together on 'One, two, three!' for something that reminds you of Jesus. Everyone must make the same pose to succeed.\n팀원들과 예수님하면 생각나는 것 하나둘셋!하면 포즈취하기 (포즈가 모두 같아야 성공)",
+  "Shout one sentence you have learned so far in your loudest voice.\n가장 큰 목소리로 그동안 배웠던 문장 하나 외치기",
+  "Beat the lead teacher at rock-paper-scissors.\n부장 선생님과 가위바위보해서 이기기",
+  "Choose the same rock-paper-scissors move as the pastor.\n전도사님과 가위 바위 보 같은 거 내기",
+  "Give a sincere compliment to the person next to you.\n옆 사람에게 칭찬 한 가지 진심으로 해주기",
+  'Shout "You are great!" to the other team.\n상대 팀에게 "You are great!" 외치기',
+  "Go around and gently fist-bump every member of the other team.\n상대 팀 전원과 돌아가며 가볍게 주먹 인사 나누기",
   ...TIMER_MISSIONS,
 ];
 
