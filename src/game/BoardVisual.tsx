@@ -53,7 +53,7 @@ export function BoardVisual({
           </p>
           <h2 className="mt-1 text-3xl font-bold sm:text-5xl">English Board</h2>
           <p className="mt-3 text-sm opacity-90 sm:text-base">
-            Faith vs Soccer — 한 바퀴 완주하면 승리!
+            Faith vs WorldCup — 한 바퀴 완주하면 승리!
           </p>
         </div>
       </div>

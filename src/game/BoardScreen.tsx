@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import confetti from "canvas-confetti";
 import { QRCodeSVG } from "qrcode.react";
-import { Key, RotateCcw, Trophy, Volume2 } from "lucide-react";
+import { Dices, Key, RotateCcw, Trophy, Volume2 } from "lucide-react";
 import { TEAMS, type TeamId } from "./config";
 import { indexToCell } from "./positions";
 import {
@@ -24,7 +24,10 @@ const DICE_FACES = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
 export default function BoardScreen() {
   const { state, loading } = useGameState();
   const [animPositions, setAnimPositions] = useState<Record<TeamId, number> | null>(null);
+  const [localRolling, setLocalRolling] = useState(false);
+  const [manualMode, setManualMode] = useState(false);
   const animatingRef = useRef(false);
+  const pendingAnimPositionsRef = useRef<Record<TeamId, number> | null>(null);
   const lastProcessedRoll = useRef<{ dice: number; turn: TeamId } | null>(null);
   const winFiredRef = useRef(false);
 
@@ -51,6 +54,15 @@ export default function BoardScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state?.last_dice, state?.rolling, state?.current_turn, state?.modal.kind, state?.winner]);
 
+  useEffect(() => {
+    if (!state || !pendingAnimPositionsRef.current) return;
+    const pending = pendingAnimPositionsRef.current;
+    if (state.faith_pos === pending.faith && state.soccer_pos === pending.soccer) {
+      pendingAnimPositionsRef.current = null;
+      setAnimPositions(null);
+    }
+  }, [state?.faith_pos, state?.soccer_pos]);
+
   // Win-screen confetti.
   useEffect(() => {
     if (state?.modal.kind === "win" && !winFiredRef.current) {
@@ -74,7 +86,7 @@ export default function BoardScreen() {
       setAnimPositions({ ...other });
       if (raw >= BOARD_SIZE) {
         // winner
-        setAnimPositions(null);
+        pendingAnimPositionsRef.current = { ...other };
         await patchGame({
           [positionField(team)]: wrapped,
           winner: team,
@@ -86,13 +98,13 @@ export default function BoardScreen() {
       }
       await sleep(240);
     }
-    setAnimPositions(null);
     const landedIndex = raw;
     const tile = BOARD_TILES[landedIndex];
     const modal: ModalState =
       tile.kind === "illustration"
         ? { kind: "illustration", tileIndex: landedIndex, team }
         : { kind: "key", mission: randomMission(), team };
+    pendingAnimPositionsRef.current = { ...other };
     await patchGame({
       [positionField(team)]: landedIndex,
       modal,
@@ -128,10 +140,83 @@ export default function BoardScreen() {
       [team]: wrapped,
     } as Record<TeamId, number>);
     await sleep(240);
-    setAnimPositions(null);
+    pendingAnimPositionsRef.current = {
+      faith: state.faith_pos,
+      soccer: state.soccer_pos,
+      [team]: wrapped,
+    } as Record<TeamId, number>;
     await patchGame({
       [positionField(team)]: wrapped,
       current_turn: otherTeam(team),
+    } as Partial<GameState>);
+  };
+
+  const isRollBusy =
+    !state ||
+    state.rolling ||
+    localRolling ||
+    state.modal.kind !== "idle" ||
+    state.winner != null ||
+    animatingRef.current;
+
+  const handleRoll = async () => {
+    if (manualMode || isRollBusy) return;
+    setLocalRolling(true);
+    await patchGame({ rolling: true, last_dice: null });
+    await sleep(900);
+    const value = 1 + Math.floor(Math.random() * 6);
+    await patchGame({ rolling: false, last_dice: value });
+    setLocalRolling(false);
+  };
+
+  const handleManualAdvance = async (team: TeamId, steps: number) => {
+    if (!state || state.rolling || state.modal.kind !== "idle" || animatingRef.current) return;
+    const clampedSteps = Math.min(BOARD_SIZE, Math.max(1, Math.round(steps)));
+    animatingRef.current = true;
+    lastProcessedRoll.current = null;
+    setAnimPositions(null);
+    await patchGame({
+      current_turn: team,
+      winner: null,
+      modal: { kind: "idle" },
+      last_dice: null,
+      rolling: false,
+    });
+    const base: GameState = {
+      ...state,
+      current_turn: team,
+      winner: null,
+      modal: { kind: "idle" },
+      last_dice: null,
+      rolling: false,
+    };
+    await runAdvance(base, clampedSteps, team).finally(() => {
+      animatingRef.current = false;
+    });
+  };
+
+  const handleSetPosition = async (team: TeamId, tileNumber: number) => {
+    if (!state) return;
+    const clamped = Math.min(BOARD_SIZE, Math.max(1, Math.round(tileNumber)));
+    const nextPositions: Record<TeamId, number> = {
+      faith: state.faith_pos,
+      soccer: state.soccer_pos,
+      [team]: clamped - 1,
+    };
+    if (state.faith_pos !== nextPositions.faith || state.soccer_pos !== nextPositions.soccer) {
+      pendingAnimPositionsRef.current = nextPositions;
+      setAnimPositions(nextPositions);
+    } else {
+      pendingAnimPositionsRef.current = null;
+      setAnimPositions(null);
+    }
+    lastProcessedRoll.current = null;
+    await patchGame({
+      [positionField(team)]: clamped - 1,
+      winner: null,
+      modal: { kind: "idle" },
+      last_dice: null,
+      rolling: false,
     } as Partial<GameState>);
   };
 
@@ -158,7 +243,15 @@ export default function BoardScreen() {
           <Sidebar
             state={state}
             controllerUrl={controllerUrl}
+            manualMode={manualMode}
+            rollBusy={manualMode || isRollBusy}
+            onManualModeChange={setManualMode}
+            onRoll={handleRoll}
+            onManualAdvance={handleManualAdvance}
+            onSetPosition={handleSetPosition}
             onReset={() => {
+              pendingAnimPositionsRef.current = null;
+              setAnimPositions(null);
               lastProcessedRoll.current = null;
               winFiredRef.current = false;
               void resetGame();
@@ -185,6 +278,8 @@ export default function BoardScreen() {
         <WinModal
           team={state.modal.team}
           onReset={() => {
+            pendingAnimPositionsRef.current = null;
+            setAnimPositions(null);
             lastProcessedRoll.current = null;
             winFiredRef.current = false;
             void resetGame();
@@ -234,14 +329,123 @@ function Header({
 function Sidebar({
   state,
   controllerUrl,
+  manualMode,
+  rollBusy,
+  onManualModeChange,
+  onRoll,
+  onManualAdvance,
+  onSetPosition,
   onReset,
 }: {
   state: GameState;
   controllerUrl: string;
+  manualMode: boolean;
+  rollBusy: boolean;
+  onManualModeChange: (manual: boolean) => void;
+  onRoll: () => void;
+  onManualAdvance: (team: TeamId, steps: number) => void;
+  onSetPosition: (team: TeamId, tileNumber: number) => void;
   onReset: () => void;
 }) {
+  const [showManualControls, setShowManualControls] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [manualSteps, setManualSteps] = useState("1");
+  const [manualPositions, setManualPositions] = useState<Record<TeamId, string>>({
+    faith: String(positionOf(state, "faith") + 1),
+    soccer: String(positionOf(state, "soccer") + 1),
+  });
+
+  useEffect(() => {
+    setManualPositions({
+      faith: String(positionOf(state, "faith") + 1),
+      soccer: String(positionOf(state, "soccer") + 1),
+    });
+  }, [state.faith_pos, state.soccer_pos]);
+
+  const applyManualPosition = (team: TeamId) => {
+    const parsed = Number.parseInt(manualPositions[team], 10);
+    if (!Number.isFinite(parsed)) return;
+    onSetPosition(team, parsed);
+  };
+
+  const applyManualAdvance = (team: TeamId) => {
+    const parsed = Number.parseInt(manualSteps, 10);
+    if (!Number.isFinite(parsed)) return;
+    onManualAdvance(team, parsed);
+  };
+  const rollButtonColor =
+    state.current_turn === "faith"
+      ? "bg-gradient-to-br from-[#ff8177] to-[#f65454]"
+      : "bg-gradient-to-br from-[#5fa5ff] to-[#5b6ff2]";
+
   return (
     <aside className="flex min-h-0 flex-col gap-3">
+      <div className="rounded-2xl bg-white/90 p-3 shadow-[var(--shadow-soft)]">
+        <div className="grid grid-cols-2 gap-2 rounded-xl bg-muted p-1">
+          <button
+            type="button"
+            onClick={() => onManualModeChange(false)}
+            className={`rounded-lg px-3 py-2 text-sm font-bold transition ${
+              !manualMode ? "bg-white text-foreground shadow-sm" : "text-muted-foreground"
+            }`}
+          >
+            자동
+          </button>
+          <button
+            type="button"
+            onClick={() => onManualModeChange(true)}
+            className={`rounded-lg px-3 py-2 text-sm font-bold transition ${
+              manualMode ? "bg-white text-foreground shadow-sm" : "text-muted-foreground"
+            }`}
+          >
+            수동
+          </button>
+        </div>
+
+        {manualMode && (
+          <div className="mt-3 space-y-2">
+            <div className="grid grid-cols-[1fr_72px] items-center gap-2">
+              <span className="text-sm font-bold text-foreground">이동 칸 수</span>
+              <input
+                type="number"
+                min={1}
+                max={BOARD_SIZE}
+                value={manualSteps}
+                onChange={(event) => setManualSteps(event.target.value)}
+                className="h-9 rounded-xl border border-input bg-white px-2 text-center text-sm font-bold text-foreground outline-none ring-ring transition focus:ring-2"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {(["faith", "soccer"] as TeamId[]).map((team) => (
+                <button
+                  key={team}
+                  type="button"
+                  onClick={() => applyManualAdvance(team)}
+                  className={`rounded-xl px-3 py-2 text-sm font-black text-white shadow transition hover:-translate-y-0.5 ${
+                    team === "faith" ? "bg-team-faith" : "bg-team-soccer"
+                  }`}
+                >
+                  {TEAMS[team].name} 이동
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <button
+        onClick={onRoll}
+        disabled={rollBusy}
+        className={`${manualMode ? "hidden" : "flex"} items-center justify-center gap-2 rounded-2xl px-4 py-3 text-base font-black text-white shadow-[var(--shadow-pop)] transition ${
+          rollBusy
+            ? "cursor-not-allowed bg-muted-foreground/50"
+            : `${rollButtonColor} hover:-translate-y-0.5 active:scale-95`
+        }`}
+      >
+        <Dices className="h-5 w-5" />
+        주사위 굴리기
+      </button>
+
       <div className="rounded-2xl bg-white/80 p-4 shadow-[var(--shadow-soft)] backdrop-blur">
         <p className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
           Progress
@@ -258,7 +462,7 @@ function Sidebar({
                     {TEAMS[t].emoji} {TEAMS[t].name}
                   </span>
                   <span className="text-muted-foreground">
-                    {pos}/{BOARD_SIZE}
+                    {pos + 1}/{BOARD_SIZE}
                   </span>
                 </div>
                 <div className="mt-1 h-3 overflow-hidden rounded-full bg-muted">
@@ -271,6 +475,51 @@ function Sidebar({
             );
           })}
         </div>
+      </div>
+
+      <div className="rounded-2xl bg-white/90 p-3 shadow-[var(--shadow-soft)]">
+        <button
+          type="button"
+          onClick={() => setShowManualControls((open) => !open)}
+          className="flex w-full items-center justify-between gap-2 text-left text-xs font-bold uppercase tracking-widest text-muted-foreground"
+        >
+          <span>말 위치 설정</span>
+          <span className="text-base leading-none">{showManualControls ? "−" : "+"}</span>
+        </button>
+        {showManualControls && (
+          <div className="mt-2 space-y-2">
+            {(["faith", "soccer"] as TeamId[]).map((team) => (
+              <div key={team} className="grid grid-cols-[1fr_68px_54px] items-center gap-2">
+                <label className="text-sm font-bold text-foreground">
+                  {TEAMS[team].emoji} {TEAMS[team].name}
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={BOARD_SIZE}
+                  value={manualPositions[team]}
+                  onChange={(event) =>
+                    setManualPositions((current) => ({
+                      ...current,
+                      [team]: event.target.value,
+                    }))
+                  }
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") applyManualPosition(team);
+                  }}
+                  className="h-9 rounded-xl border border-input bg-white px-2 text-center text-sm font-bold text-foreground outline-none ring-ring transition focus:ring-2"
+                />
+                <button
+                  type="button"
+                  onClick={() => applyManualPosition(team)}
+                  className="h-9 rounded-xl bg-foreground px-2 text-xs font-bold text-background transition hover:-translate-y-0.5"
+                >
+                  적용
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {controllerUrl && (
@@ -291,12 +540,42 @@ function Sidebar({
       )}
 
       <button
-        onClick={onReset}
+        onClick={() => setShowResetConfirm(true)}
         className="flex items-center justify-center gap-2 rounded-2xl border-2 border-foreground/10 bg-white/70 px-4 py-2.5 text-base font-bold text-foreground transition hover:-translate-y-0.5 hover:bg-white"
       >
         <RotateCcw className="h-5 w-5" />
         게임 초기화 / 다시하기
       </button>
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="animate-pop-in w-full max-w-sm rounded-3xl bg-white p-6 text-center shadow-[var(--shadow-pop)]">
+            <RotateCcw className="mx-auto h-10 w-10 text-destructive" />
+            <h2 className="mt-3 text-xl font-black text-foreground">게임을 다시 시작할까요?</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              현재 말 위치와 진행 상태가 처음으로 돌아갑니다.
+            </p>
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setShowResetConfirm(false)}
+                className="rounded-2xl bg-muted px-4 py-3 text-base font-bold text-foreground transition hover:-translate-y-0.5"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowResetConfirm(false);
+                  onReset();
+                }}
+                className="rounded-2xl bg-destructive px-4 py-3 text-base font-bold text-white shadow transition hover:-translate-y-0.5"
+              >
+                다시하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }
@@ -341,9 +620,6 @@ function IllustrationModal({
             className="h-full w-full object-cover"
           />
         </div>
-        <p className="mt-3 text-xs text-muted-foreground">
-          진행자용 힌트: <span className="font-semibold">{tile.illustration.hint}</span>
-        </p>
         <audio ref={audioRef} src={tile.illustration.audioSrc} preload="auto" />
         <button
           onClick={() => {

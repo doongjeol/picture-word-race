@@ -15,7 +15,7 @@ function Index() {
           영어예배 보드게임 🎲
         </h1>
         <p className="mt-4 text-muted-foreground">
-          Faith 팀과 Soccer 팀이 겨루는 온라인 보드게임입니다.
+          Faith 팀과 WorldCup 팀이 겨루는 온라인 보드게임입니다.
           <br />
           말판은 큰 화면에, 컨트롤러는 스마트폰에서 열어주세요.
         </p>

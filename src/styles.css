@@ -92,10 +92,10 @@
   --ring: oklch(0.68 0.18 250);
 
   /* Game palette */
-  --team-soccer: oklch(0.65 0.19 250);
-  --team-soccer-soft: oklch(0.9 0.08 250);
-  --team-faith: oklch(0.7 0.2 25);
-  --team-faith-soft: oklch(0.92 0.08 30);
+  --team-soccer: oklch(0.65 0.2 260);
+  --team-soccer-soft: oklch(0.91 0.07 260);
+  --team-faith: oklch(0.68 0.2 28);
+  --team-faith-soft: oklch(0.92 0.08 28);
   --key-color: oklch(0.78 0.17 90);
   --board-bg: oklch(0.97 0.03 95);
   --tile-1: oklch(0.9 0.09 200);
