@@ -7,6 +7,7 @@ export type ModalState =
   | { kind: "idle" }
   | { kind: "illustration"; tileIndex: number; team: TeamId }
   | { kind: "key"; mission: string; team: TeamId }
+  | { kind: "key"; penaltySteps: 1 | 2; team: TeamId }
   | { kind: "win"; team: TeamId };
 
 export type GameState = {
@@ -92,8 +93,8 @@ export async function patchGame(patch: Partial<GameState>) {
   await supabase.from("game_state").update(patch as any).eq("id", 1);
 }
 
-export async function resetGame() {
-  await patchGame({ ...INITIAL_STATE });
+export async function resetGame(startTeam: TeamId = "faith") {
+  await patchGame({ ...INITIAL_STATE, current_turn: startTeam });
 }
 
 /** Utility: pick a random mission string. */

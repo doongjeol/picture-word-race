@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import confetti from "canvas-confetti";
 import { QRCodeSVG } from "qrcode.react";
-import { Dices, Key, RotateCcw, Trophy, Volume2 } from "lucide-react";
+import { Dices, Eye, Key, RotateCcw, Trophy, Volume2 } from "lucide-react";
 import { TEAMS, type TeamId } from "./config";
 import { indexToCell } from "./positions";
 import {
@@ -26,6 +26,7 @@ export default function BoardScreen() {
   const [animPositions, setAnimPositions] = useState<Record<TeamId, number> | null>(null);
   const [localRolling, setLocalRolling] = useState(false);
   const [manualMode, setManualMode] = useState(false);
+  const [keyPenaltyCards, setKeyPenaltyCards] = useState(false);
   const animatingRef = useRef(false);
   const pendingAnimPositionsRef = useRef<Record<TeamId, number> | null>(null);
   const lastProcessedRoll = useRef<{ dice: number; turn: TeamId } | null>(null);
@@ -103,11 +104,32 @@ export default function BoardScreen() {
     const modal: ModalState =
       tile.kind === "illustration"
         ? { kind: "illustration", tileIndex: landedIndex, team }
-        : { kind: "key", mission: randomMission(), team };
+        : buildKeyCard(team, keyPenaltyCards);
     pendingAnimPositionsRef.current = { ...other };
     await patchGame({
       [positionField(team)]: landedIndex,
       modal,
+      last_dice: null,
+      rolling: false,
+    } as Partial<GameState>);
+  };
+
+  const handleKeyPenalty = async (steps: 1 | 2) => {
+    if (!state || state.modal.kind !== "key" || !("penaltySteps" in state.modal)) return;
+    const team = state.modal.team;
+    const next = Math.max(0, positionOf(state, team) - steps);
+    const nextPositions: Record<TeamId, number> = {
+      faith: state.faith_pos,
+      soccer: state.soccer_pos,
+      [team]: next,
+    };
+    setAnimPositions(nextPositions);
+    await sleep(240);
+    pendingAnimPositionsRef.current = nextPositions;
+    await patchGame({
+      [positionField(team)]: next,
+      modal: { kind: "idle" },
+      current_turn: otherTeam(team),
       last_dice: null,
       rolling: false,
     } as Partial<GameState>);
@@ -167,6 +189,19 @@ export default function BoardScreen() {
     const value = 1 + Math.floor(Math.random() * 6);
     await patchGame({ rolling: false, last_dice: value });
     setLocalRolling(false);
+  };
+
+  const handleShowCurrentQuestion = async (team: TeamId) => {
+    if (!state || state.rolling || state.modal.kind !== "idle" || state.winner || animatingRef.current) {
+      return;
+    }
+    const tileIndex = positionOf(state, team);
+    const tile = BOARD_TILES[tileIndex];
+    const modal: ModalState =
+      tile.kind === "illustration"
+        ? { kind: "illustration", tileIndex, team }
+        : buildKeyCard(team, keyPenaltyCards);
+    await patchGame({ modal, last_dice: null, rolling: false } as Partial<GameState>);
   };
 
   const handleManualAdvance = async (team: TeamId, steps: number) => {
@@ -244,17 +279,20 @@ export default function BoardScreen() {
             state={state}
             controllerUrl={controllerUrl}
             manualMode={manualMode}
+            keyPenaltyCards={keyPenaltyCards}
             rollBusy={manualMode || isRollBusy}
             onManualModeChange={setManualMode}
+            onKeyPenaltyCardsChange={setKeyPenaltyCards}
             onRoll={handleRoll}
+            onShowCurrentQuestion={handleShowCurrentQuestion}
             onManualAdvance={handleManualAdvance}
             onSetPosition={handleSetPosition}
-            onReset={() => {
+            onReset={(startTeam) => {
               pendingAnimPositionsRef.current = null;
               setAnimPositions(null);
               lastProcessedRoll.current = null;
               winFiredRef.current = false;
-              void resetGame();
+              void resetGame(startTeam);
             }}
           />
         </div>
@@ -268,21 +306,23 @@ export default function BoardScreen() {
         />
       )}
       {state.modal.kind === "key" && (
-        <MissionModal
-          mission={state.modal.mission}
+        <KeyModal
+          mission={"mission" in state.modal ? state.modal.mission : undefined}
+          penaltySteps={"penaltySteps" in state.modal ? state.modal.penaltySteps : undefined}
           team={state.modal.team}
           onResult={handleModalResult}
+          onPenalty={handleKeyPenalty}
         />
       )}
       {state.modal.kind === "win" && (
         <WinModal
           team={state.modal.team}
-          onReset={() => {
+          onReset={(startTeam) => {
             pendingAnimPositionsRef.current = null;
             setAnimPositions(null);
             lastProcessedRoll.current = null;
             winFiredRef.current = false;
-            void resetGame();
+            void resetGame(startTeam);
           }}
         />
       )}
@@ -330,9 +370,12 @@ function Sidebar({
   state,
   controllerUrl,
   manualMode,
+  keyPenaltyCards,
   rollBusy,
   onManualModeChange,
+  onKeyPenaltyCardsChange,
   onRoll,
+  onShowCurrentQuestion,
   onManualAdvance,
   onSetPosition,
   onReset,
@@ -340,15 +383,20 @@ function Sidebar({
   state: GameState;
   controllerUrl: string;
   manualMode: boolean;
+  keyPenaltyCards: boolean;
   rollBusy: boolean;
   onManualModeChange: (manual: boolean) => void;
+  onKeyPenaltyCardsChange: (enabled: boolean) => void;
   onRoll: () => void;
+  onShowCurrentQuestion: (team: TeamId) => void;
   onManualAdvance: (team: TeamId, steps: number) => void;
   onSetPosition: (team: TeamId, tileNumber: number) => void;
-  onReset: () => void;
+  onReset: (startTeam: TeamId) => void;
 }) {
   const [showManualControls, setShowManualControls] = useState(false);
+  const [showGameOptions, setShowGameOptions] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetStartTeam, setResetStartTeam] = useState<TeamId>(state.current_turn);
   const [manualSteps, setManualSteps] = useState("1");
   const [manualPositions, setManualPositions] = useState<Record<TeamId, string>>({
     faith: String(positionOf(state, "faith") + 1),
@@ -433,6 +481,24 @@ function Sidebar({
         )}
       </div>
 
+      <div className="hidden rounded-2xl bg-white/90 p-3 shadow-[var(--shadow-soft)]">
+        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+          Game Options
+        </p>
+        <label className="mt-3 flex cursor-pointer items-center justify-between gap-3 rounded-xl bg-muted px-3 py-2">
+          <span className="text-sm font-bold text-foreground">열쇠 후퇴 카드</span>
+          <input
+            type="checkbox"
+            checked={keyPenaltyCards}
+            onChange={(event) => onKeyPenaltyCardsChange(event.target.checked)}
+            className="h-5 w-5 accent-key"
+          />
+        </label>
+        <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+          켜면 열쇠 칸에서 미션 대신 -1칸 또는 -2칸 카드가 나올 수 있어요.
+        </p>
+      </div>
+
       <button
         onClick={onRoll}
         disabled={rollBusy}
@@ -445,6 +511,50 @@ function Sidebar({
         <Dices className="h-5 w-5" />
         주사위 굴리기
       </button>
+
+      <button
+        type="button"
+        onClick={() => onShowCurrentQuestion(state.current_turn)}
+        disabled={state.rolling || state.modal.kind !== "idle" || state.winner != null}
+        className="hidden items-center justify-center gap-2 rounded-2xl border-2 border-foreground/10 bg-white/80 px-4 py-2.5 text-base font-bold text-foreground shadow-[var(--shadow-soft)] transition hover:-translate-y-0.5 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+      >
+        <Eye className="h-5 w-5" />
+        현재 위치 문제보기
+      </button>
+
+      <div className="grid grid-cols-2 gap-2">
+        {(["faith", "soccer"] as TeamId[]).map((team) => (
+          <button
+            key={team}
+            type="button"
+            onClick={() => onShowCurrentQuestion(team)}
+            disabled={state.rolling || state.modal.kind !== "idle" || state.winner != null}
+            className={`hidden items-center justify-center gap-1.5 rounded-2xl px-3 py-2.5 text-sm font-bold text-white shadow-[var(--shadow-soft)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 ${
+              team === "faith"
+                ? "bg-gradient-to-br from-[#ff8177] to-[#f65454]"
+                : "bg-gradient-to-br from-[#5fa5ff] to-[#5b6ff2]"
+            }`}
+          >
+            <Eye className="h-4 w-4" />
+            {TEAMS[team].name}팀 보기
+          </button>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        {(["faith", "soccer"] as TeamId[]).map((team) => (
+          <button
+            key={team}
+            type="button"
+            onClick={() => onShowCurrentQuestion(team)}
+            disabled={state.rolling || state.modal.kind !== "idle" || state.winner != null}
+            className="flex min-w-0 items-center justify-center gap-1.5 rounded-xl border border-foreground/10 bg-white/70 px-2 py-2 text-sm font-bold text-foreground shadow-sm transition hover:-translate-y-0.5 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+          >
+            <Eye className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <span className="min-w-0 truncate">{TEAMS[team].name}</span>
+          </button>
+        ))}
+      </div>
 
       <div className="rounded-2xl bg-white/80 p-4 shadow-[var(--shadow-soft)] backdrop-blur">
         <p className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
@@ -522,6 +632,33 @@ function Sidebar({
         )}
       </div>
 
+      <div className="rounded-2xl bg-white/90 p-3 shadow-[var(--shadow-soft)]">
+        <button
+          type="button"
+          onClick={() => setShowGameOptions((open) => !open)}
+          className="flex w-full items-center justify-between gap-2 text-left text-xs font-bold uppercase tracking-widest text-muted-foreground"
+        >
+          <span>게임 옵션</span>
+          <span className="text-base leading-none">{showGameOptions ? "−" : "+"}</span>
+        </button>
+        {showGameOptions && (
+          <div className="mt-2 space-y-2">
+            <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl bg-muted px-3 py-2">
+              <span className="text-sm font-bold text-foreground">열쇠 후퇴 카드</span>
+              <input
+                type="checkbox"
+                checked={keyPenaltyCards}
+                onChange={(event) => onKeyPenaltyCardsChange(event.target.checked)}
+                className="h-5 w-5 accent-key"
+              />
+            </label>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              켜면 열쇠 칸에서 미션 대신 -1칸 또는 -2칸 카드가 나올 수 있어요.
+            </p>
+          </div>
+        )}
+      </div>
+
       {controllerUrl && (
         <div className="rounded-2xl bg-white/90 p-3 shadow-[var(--shadow-soft)]">
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
@@ -540,7 +677,10 @@ function Sidebar({
       )}
 
       <button
-        onClick={() => setShowResetConfirm(true)}
+        onClick={() => {
+          setResetStartTeam(state.current_turn);
+          setShowResetConfirm(true);
+        }}
         className="flex items-center justify-center gap-2 rounded-2xl border-2 border-foreground/10 bg-white/70 px-4 py-2.5 text-base font-bold text-foreground transition hover:-translate-y-0.5 hover:bg-white"
       >
         <RotateCcw className="h-5 w-5" />
@@ -554,6 +694,7 @@ function Sidebar({
             <p className="mt-2 text-sm text-muted-foreground">
               현재 말 위치와 진행 상태가 처음으로 돌아갑니다.
             </p>
+            <StartTeamPicker value={resetStartTeam} onChange={setResetStartTeam} />
             <div className="mt-6 grid grid-cols-2 gap-3">
               <button
                 type="button"
@@ -566,7 +707,7 @@ function Sidebar({
                 type="button"
                 onClick={() => {
                   setShowResetConfirm(false);
-                  onReset();
+                  onReset(resetStartTeam);
                 }}
                 className="rounded-2xl bg-destructive px-4 py-3 text-base font-bold text-white shadow transition hover:-translate-y-0.5"
               >
@@ -652,6 +793,71 @@ function IllustrationModal({
   );
 }
 
+function KeyModal({
+  mission,
+  penaltySteps,
+  team,
+  onResult,
+  onPenalty,
+}: {
+  mission?: string;
+  penaltySteps?: 1 | 2;
+  team: TeamId;
+  onResult: (success: boolean) => void;
+  onPenalty: (steps: 1 | 2) => void;
+}) {
+  const t = TEAMS[team];
+  const isPenalty = penaltySteps != null;
+  return (
+    <ModalShell team={team}>
+      <div className="flex flex-col items-center text-center">
+        <div className="flex items-center gap-2 rounded-full bg-key px-4 py-1.5 text-sm font-bold text-white shadow">
+          <Key className="h-4 w-4" /> 열쇠 카드
+        </div>
+        <p className="mt-3 text-sm font-bold uppercase tracking-widest text-muted-foreground">
+          {t.emoji} {t.name}
+        </p>
+        {isPenalty ? (
+          <>
+            <p className="mt-6 text-5xl font-black leading-none text-destructive sm:text-6xl">
+              -{penaltySteps}
+            </p>
+            <p className="mt-3 text-2xl font-bold leading-snug text-foreground sm:text-3xl">
+              {penaltySteps}칸 뒤로 이동
+            </p>
+            <button
+              onClick={() => onPenalty(penaltySteps)}
+              className="mt-8 w-full rounded-2xl bg-destructive px-6 py-4 text-lg font-bold text-white shadow-lg transition hover:-translate-y-0.5"
+            >
+              확인
+            </button>
+          </>
+        ) : (
+          <>
+            <p className="mt-6 text-2xl font-bold leading-snug text-foreground sm:text-3xl">
+              {mission}
+            </p>
+            <div className="mt-8 grid w-full grid-cols-2 gap-3">
+              <button
+                onClick={() => onResult(false)}
+                className="rounded-2xl bg-white px-6 py-4 text-lg font-bold text-muted-foreground shadow ring-2 ring-muted transition hover:-translate-y-0.5"
+              >
+                실패
+              </button>
+              <button
+                onClick={() => onResult(true)}
+                className="rounded-2xl bg-gradient-to-br from-[oklch(0.8_0.17_90)] to-[oklch(0.68_0.2_60)] px-6 py-4 text-lg font-bold text-white shadow-lg transition hover:-translate-y-0.5"
+              >
+                성공 (+1칸)
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </ModalShell>
+  );
+}
+
 function MissionModal({
   mission,
   team,
@@ -693,7 +899,53 @@ function MissionModal({
   );
 }
 
-function WinModal({ team, onReset }: { team: TeamId; onReset: () => void }) {
+function StartTeamPicker({
+  value,
+  onChange,
+  light = false,
+}: {
+  value: TeamId;
+  onChange: (team: TeamId) => void;
+  light?: boolean;
+}) {
+  return (
+    <div className={`mt-5 rounded-2xl p-1 ${light ? "bg-white/15" : "bg-muted"}`}>
+      <p
+        className={`px-2 pb-2 pt-1 text-xs font-bold uppercase tracking-widest ${
+          light ? "text-white/75" : "text-muted-foreground"
+        }`}
+      >
+        Starting Team
+      </p>
+      <div className="grid grid-cols-2 gap-1">
+        {(["faith", "soccer"] as TeamId[]).map((team) => {
+          const active = value === team;
+          return (
+            <button
+              key={team}
+              type="button"
+              onClick={() => onChange(team)}
+              className={`rounded-xl px-3 py-2 text-sm font-black transition ${
+                active
+                  ? team === "faith"
+                    ? "bg-team-faith text-white shadow"
+                    : "bg-team-soccer text-white shadow"
+                  : light
+                    ? "bg-white/90 text-foreground hover:-translate-y-0.5"
+                    : "bg-white text-foreground hover:-translate-y-0.5"
+              }`}
+            >
+              {TEAMS[team].emoji} {TEAMS[team].name}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function WinModal({ team, onReset }: { team: TeamId; onReset: (startTeam: TeamId) => void }) {
+  const [startTeam, setStartTeam] = useState<TeamId>(team);
   const t = TEAMS[team];
   const color =
     team === "faith"
@@ -712,8 +964,9 @@ function WinModal({ team, onReset }: { team: TeamId; onReset: () => void }) {
           {t.emoji} {t.name} 팀 승리!
         </h2>
         <p className="mt-3 text-base opacity-90">한 바퀴 완주를 축하합니다 🎉</p>
+        <StartTeamPicker value={startTeam} onChange={setStartTeam} light />
         <button
-          onClick={onReset}
+          onClick={() => onReset(startTeam)}
           className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-white px-8 py-4 text-lg font-bold text-foreground shadow-lg transition hover:-translate-y-0.5"
         >
           <RotateCcw className="h-5 w-5" />
@@ -722,6 +975,17 @@ function WinModal({ team, onReset }: { team: TeamId; onReset: () => void }) {
       </div>
     </div>
   );
+}
+
+function buildKeyCard(team: TeamId, includePenaltyCards: boolean): ModalState {
+  if (includePenaltyCards && Math.random() < 1 / 3) {
+    return {
+      kind: "key",
+      penaltySteps: Math.random() < 0.5 ? 1 : 2,
+      team,
+    };
+  }
+  return { kind: "key", mission: randomMission(), team };
 }
 
 function sleep(ms: number) {
