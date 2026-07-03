@@ -14,7 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      game_state: {
+        Row: {
+          current_turn: string
+          faith_pos: number
+          id: number
+          last_dice: number | null
+          modal: Json
+          reveal_dice_at: number | null
+          rolling: boolean
+          soccer_pos: number
+          updated_at: string
+          winner: string | null
+        }
+        Insert: {
+          current_turn?: string
+          faith_pos?: number
+          id?: number
+          last_dice?: number | null
+          modal?: Json
+          reveal_dice_at?: number | null
+          rolling?: boolean
+          soccer_pos?: number
+          updated_at?: string
+          winner?: string | null
+        }
+        Update: {
+          current_turn?: string
+          faith_pos?: number
+          id?: number
+          last_dice?: number | null
+          modal?: Json
+          reveal_dice_at?: number | null
+          rolling?: boolean
+          soccer_pos?: number
+          updated_at?: string
+          winner?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
