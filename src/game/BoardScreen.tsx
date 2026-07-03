@@ -408,7 +408,7 @@ function Header({ turn }: { turn: TeamId }) {
           className={`animate-pop-in flex items-center gap-2 rounded-full ${color} px-4 py-2 text-white shadow-[var(--shadow-pop)] sm:px-5`}
         >
           <span className="text-lg sm:text-xl">{t.emoji}</span>
-          <span className="text-sm font-bold sm:text-base">지금은 {t.name} 팀 차례!</span>
+          <span className="text-sm font-bold sm:text-base">{t.name}'s Turn</span>
         </div>
       </div>
     </header>
@@ -559,7 +559,7 @@ function Sidebar({
         }`}
       >
         <Dices className="h-5 w-5" />
-        주사위 굴리기
+        Roll Dice
       </button>
 
       <button
@@ -811,7 +811,7 @@ function IllustrationModal({
     <ModalShell team={team}>
       <div className="flex flex-col items-center text-center">
         <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
-          {t.emoji} {t.name} · 문장을 외쳐보세요!
+          {t.emoji} {t.name} · Say the Sentence!
         </p>
         <div className="mt-4 aspect-square w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-inner">
           <img
@@ -831,20 +831,20 @@ function IllustrationModal({
           className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-base font-bold text-foreground shadow ring-1 ring-black/5 transition hover:-translate-y-0.5 hover:bg-white/90"
         >
           <Volume2 className="h-5 w-5" />
-          문장 듣기
+          Listen
         </button>
         <div className="mt-6 grid w-full grid-cols-2 gap-3">
           <button
             onClick={() => onAnswer(false)}
             className="rounded-2xl bg-white px-6 py-4 text-lg font-bold text-destructive shadow ring-2 ring-destructive/30 transition hover:-translate-y-0.5 hover:ring-destructive"
           >
-            듣기 사용
+            Use Listening
           </button>
           <button
             onClick={() => onAnswer(true)}
             className="rounded-2xl bg-gradient-to-br from-[oklch(0.75_0.18_150)] to-[oklch(0.6_0.2_150)] px-6 py-4 text-lg font-bold text-white shadow-lg transition hover:-translate-y-0.5"
           >
-            ✓ 정답 (+1칸)
+            ✓ Correct (+1)
           </button>
         </div>
       </div>
@@ -872,7 +872,7 @@ function KeyModal({
     <ModalShell team={team}>
       <div className="flex flex-col items-center text-center">
         <div className="flex items-center gap-2 rounded-full bg-key px-4 py-1.5 text-sm font-bold text-white shadow">
-          <Key className="h-4 w-4" /> 열쇠 카드
+          <Key className="h-4 w-4" /> Key Card
         </div>
         <p className="mt-3 text-sm font-bold uppercase tracking-widest text-muted-foreground">
           {t.emoji} {t.name}
@@ -883,13 +883,13 @@ function KeyModal({
               -{penaltySteps}
             </p>
             <p className="mt-3 text-2xl font-bold leading-snug text-foreground sm:text-3xl">
-              {penaltySteps}칸 뒤로 이동
+              Move back {penaltySteps} {penaltySteps === 1 ? "space" : "spaces"}
             </p>
             <button
               onClick={() => onPenalty(penaltySteps)}
               className="mt-8 w-full rounded-2xl bg-destructive px-6 py-4 text-lg font-bold text-white shadow-lg transition hover:-translate-y-0.5"
             >
-              확인
+              OK
             </button>
           </>
         ) : (
@@ -903,13 +903,13 @@ function KeyModal({
                 onClick={() => onResult(false)}
                 className="rounded-2xl bg-white px-6 py-4 text-lg font-bold text-muted-foreground shadow ring-2 ring-muted transition hover:-translate-y-0.5"
               >
-                실패
+                Fail
               </button>
               <button
                 onClick={() => onResult(true)}
                 className="rounded-2xl bg-gradient-to-br from-[oklch(0.8_0.17_90)] to-[oklch(0.68_0.2_60)] px-6 py-4 text-lg font-bold text-white shadow-lg transition hover:-translate-y-0.5"
               >
-                성공 (+1칸)
+                Success (+1)
               </button>
             </div>
           </>
@@ -933,7 +933,7 @@ function MissionModal({
     <ModalShell team={team}>
       <div className="flex flex-col items-center text-center">
         <div className="flex items-center gap-2 rounded-full bg-key px-4 py-1.5 text-sm font-bold text-white shadow">
-          <Key className="h-4 w-4" /> 열쇠 미션
+          <Key className="h-4 w-4" /> Key Mission
         </div>
         <p className="mt-3 text-sm font-bold uppercase tracking-widest text-muted-foreground">
           {t.emoji} {t.name}
@@ -946,13 +946,13 @@ function MissionModal({
             onClick={() => onResult(false)}
             className="rounded-2xl bg-white px-6 py-4 text-lg font-bold text-muted-foreground shadow ring-2 ring-muted transition hover:-translate-y-0.5"
           >
-            실패
+            Fail
           </button>
           <button
             onClick={() => onResult(true)}
             className="rounded-2xl bg-gradient-to-br from-[oklch(0.8_0.17_90)] to-[oklch(0.68_0.2_60)] px-6 py-4 text-lg font-bold text-white shadow-lg transition hover:-translate-y-0.5"
           >
-            성공 (+1칸)
+            Success (+1)
           </button>
         </div>
       </div>

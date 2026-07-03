@@ -198,3 +198,23 @@
 @utility animate-float-slow {
   animation: float-slow 3s ease-in-out infinite;
 }
+
+button.text-xs {
+  font-size: 0.8125rem;
+}
+
+button.text-sm {
+  font-size: 0.975rem;
+}
+
+button.text-base {
+  font-size: 1.0625rem;
+}
+
+button.text-lg {
+  font-size: 1.1875rem;
+}
+
+button.text-xl {
+  font-size: 1.3125rem;
+}

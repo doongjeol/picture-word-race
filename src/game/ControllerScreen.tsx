@@ -64,7 +64,7 @@ export default function ControllerScreen() {
           className={`animate-pop-in ${teamAccent} rounded-full px-6 py-3 text-white shadow-[var(--shadow-pop)]`}
         >
           <span className="text-2xl">{t.emoji}</span>{" "}
-          <span className="text-xl font-bold">{t.name} 팀 차례</span>
+          <span className="text-xl font-bold">{t.name}'s Turn</span>
         </div>
       </header>
 
@@ -91,7 +91,7 @@ export default function ControllerScreen() {
             {state.rolling || localRolling ? (
               <>
                 <div className="animate-dice-roll text-[8rem] leading-none">🎲</div>
-                <p className="text-2xl font-bold">굴리는 중…</p>
+                <p className="text-2xl font-bold">Rolling...</p>
               </>
             ) : state.winner ? (
               <>
@@ -108,7 +108,7 @@ export default function ControllerScreen() {
             ) : (
               <>
                 <Dices className="h-24 w-24" strokeWidth={2.4} />
-                <p className="text-3xl font-black">주사위 굴리기</p>
+                <p className="text-3xl font-black">Roll Dice</p>
                 <p className="text-base opacity-90">화면을 눌러주세요</p>
               </>
             )}
