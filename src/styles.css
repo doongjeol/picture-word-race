@@ -59,10 +59,10 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --color-team-a: var(--team-a);
-  --color-team-a-soft: var(--team-a-soft);
-  --color-team-b: var(--team-b);
-  --color-team-b-soft: var(--team-b-soft);
+  --color-team-soccer: var(--team-soccer);
+  --color-team-soccer-soft: var(--team-soccer-soft);
+  --color-team-faith: var(--team-faith);
+  --color-team-faith-soft: var(--team-faith-soft);
   --color-key: var(--key-color);
   --color-board-bg: var(--board-bg);
   --font-display: "Fredoka", "Noto Sans KR", system-ui, sans-serif;
@@ -92,10 +92,10 @@
   --ring: oklch(0.68 0.18 250);
 
   /* Game palette */
-  --team-a: oklch(0.65 0.19 250);
-  --team-a-soft: oklch(0.9 0.08 250);
-  --team-b: oklch(0.7 0.2 25);
-  --team-b-soft: oklch(0.92 0.08 30);
+  --team-soccer: oklch(0.65 0.19 250);
+  --team-soccer-soft: oklch(0.9 0.08 250);
+  --team-faith: oklch(0.7 0.2 25);
+  --team-faith-soft: oklch(0.92 0.08 30);
   --key-color: oklch(0.78 0.17 90);
   --board-bg: oklch(0.97 0.03 95);
   --tile-1: oklch(0.9 0.09 200);
