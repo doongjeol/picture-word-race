@@ -53,8 +53,10 @@ export function buildBoard(): Tile[] {
   return tiles;
 }
 
-export type TeamId = "A" | "B";
+export type TeamId = "faith" | "soccer";
 export const TEAMS: Record<TeamId, { name: string; emoji: string }> = {
-  A: { name: "Team A", emoji: "🦁" },
-  B: { name: "Team B", emoji: "🐼" },
+  faith: { name: "Faith", emoji: "🔥" },
+  soccer: { name: "Soccer", emoji: "⚽" },
 };
+
+export const TEAM_IDS: TeamId[] = ["faith", "soccer"];
