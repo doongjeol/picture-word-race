@@ -88,8 +88,8 @@ function rowToState(row: Record<string, unknown>): GameState {
 
 /** Merge patch to the single game state row. */
 export async function patchGame(patch: Partial<GameState>) {
-  const payload: Record<string, unknown> = { ...patch };
-  await supabase.from("game_state").update(payload).eq("id", 1);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await supabase.from("game_state").update(patch as any).eq("id", 1);
 }
 
 export async function resetGame() {
