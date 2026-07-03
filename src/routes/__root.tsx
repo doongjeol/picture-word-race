@@ -81,9 +81,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "JEBS 영어예배 활동용 팀 대항 온라인 보드게임. 주사위를 굴려 삽화 문장을 외치고 완주하세요!" },
       { name: "author", content: "JEBS" },
       { property: "og:title", content: "JEBS 영어예배 보드게임" },
-      { property: "og:description", content: "교회 영어예배용 팀 대항 보드게임 웹앱" },
+      { property: "og:description", content: "JEBS 영어예배 활동용 팀 대항 온라인 보드게임. 주사위를 굴려 삽화 문장을 외치고 완주하세요!" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "JEBS 영어예배 보드게임" },
+      { name: "twitter:description", content: "JEBS 영어예배 활동용 팀 대항 온라인 보드게임. 주사위를 굴려 삽화 문장을 외치고 완주하세요!" },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/addb3fbc-2fe1-4903-a106-887826a5392a/id-preview-53d7a02d--37015ff4-6fc1-4adf-9d91-54463d71a721.lovable.app-1783049477109.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/addb3fbc-2fe1-4903-a106-887826a5392a/id-preview-53d7a02d--37015ff4-6fc1-4adf-9d91-54463d71a721.lovable.app-1783049477109.png" },
     ],
     links: [
       {
