@@ -99,8 +99,7 @@ function TileCard({ tile, teams }: { tile: Tile; teams: TeamId[] }) {
 }
 
 function Pawn({ team }: { team: TeamId }) {
-  const color = team === "faith" ? "bg-team-b" : "bg-team-a";
-  // Faith = orange/pink (team-b tokens), Soccer = blue (team-a tokens).
+  const color = team === "faith" ? "bg-team-faith" : "bg-team-soccer";
   return (
     <div
       className={`animate-pawn-hop flex h-8 w-8 items-center justify-center rounded-full ${color} text-lg shadow-lg ring-2 ring-white sm:h-10 sm:w-10 sm:text-xl`}
