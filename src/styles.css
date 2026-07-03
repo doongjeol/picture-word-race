@@ -59,6 +59,14 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-team-a: var(--team-a);
+  --color-team-a-soft: var(--team-a-soft);
+  --color-team-b: var(--team-b);
+  --color-team-b-soft: var(--team-b-soft);
+  --color-key: var(--key-color);
+  --color-board-bg: var(--board-bg);
+  --font-display: "Fredoka", "Noto Sans KR", system-ui, sans-serif;
+  --font-sans: "Fredoka", "Noto Sans KR", system-ui, sans-serif;
 }
 
 :root {
