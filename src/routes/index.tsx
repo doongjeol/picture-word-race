@@ -32,6 +32,30 @@ function Index() {
           >
             📱 컨트롤러 열기 (/controller)
           </Link>
+          <Link
+            to="/sailing-vocab"
+            className="rounded-2xl bg-gradient-to-br from-[oklch(0.75_0.12_200)] to-[oklch(0.6_0.16_230)] px-6 py-5 text-lg font-bold text-white shadow-lg transition hover:-translate-y-0.5"
+          >
+            ⛵ 항해 영단어 슬라이드 (/sailing-vocab)
+          </Link>
+          <Link
+            to="/sailing-quiz"
+            className="rounded-2xl bg-gradient-to-br from-[oklch(0.75_0.14_25)] to-[oklch(0.62_0.2_20)] px-6 py-5 text-lg font-bold text-white shadow-lg transition hover:-translate-y-0.5"
+          >
+            🎯 항해 영단어 퀴즈 (/sailing-quiz)
+          </Link>
+          <Link
+            to="/chants"
+            className="rounded-2xl bg-gradient-to-br from-[oklch(0.7_0.14_290)] to-[oklch(0.58_0.18_310)] px-6 py-5 text-lg font-bold text-white shadow-lg transition hover:-translate-y-0.5"
+          >
+            🎶 챈트 배우기 (/chants)
+          </Link>
+          <Link
+            to="/chorus"
+            className="rounded-2xl bg-gradient-to-br from-[oklch(0.75_0.14_25)] to-[oklch(0.6_0.18_10)] px-6 py-5 text-lg font-bold text-white shadow-lg transition hover:-translate-y-0.5"
+          >
+            🎤 찬양 후렴 배우기 (/chorus)
+          </Link>
         </div>
       </div>
     </div>

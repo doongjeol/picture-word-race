@@ -9,13 +9,37 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SailingVocabRouteImport } from './routes/sailing-vocab'
+import { Route as SailingQuizRouteImport } from './routes/sailing-quiz'
 import { Route as ControllerRouteImport } from './routes/controller'
+import { Route as ChorusRouteImport } from './routes/chorus'
+import { Route as ChantsRouteImport } from './routes/chants'
 import { Route as BoardRouteImport } from './routes/board'
 import { Route as IndexRouteImport } from './routes/index'
 
+const SailingVocabRoute = SailingVocabRouteImport.update({
+  id: '/sailing-vocab',
+  path: '/sailing-vocab',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SailingQuizRoute = SailingQuizRouteImport.update({
+  id: '/sailing-quiz',
+  path: '/sailing-quiz',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ControllerRoute = ControllerRouteImport.update({
   id: '/controller',
   path: '/controller',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChorusRoute = ChorusRouteImport.update({
+  id: '/chorus',
+  path: '/chorus',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChantsRoute = ChantsRouteImport.update({
+  id: '/chants',
+  path: '/chants',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BoardRoute = BoardRouteImport.update({
@@ -32,40 +56,106 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/board': typeof BoardRoute
+  '/chants': typeof ChantsRoute
+  '/chorus': typeof ChorusRoute
   '/controller': typeof ControllerRoute
+  '/sailing-quiz': typeof SailingQuizRoute
+  '/sailing-vocab': typeof SailingVocabRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/board': typeof BoardRoute
+  '/chants': typeof ChantsRoute
+  '/chorus': typeof ChorusRoute
   '/controller': typeof ControllerRoute
+  '/sailing-quiz': typeof SailingQuizRoute
+  '/sailing-vocab': typeof SailingVocabRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/board': typeof BoardRoute
+  '/chants': typeof ChantsRoute
+  '/chorus': typeof ChorusRoute
   '/controller': typeof ControllerRoute
+  '/sailing-quiz': typeof SailingQuizRoute
+  '/sailing-vocab': typeof SailingVocabRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/board' | '/controller'
+  fullPaths:
+    | '/'
+    | '/board'
+    | '/chants'
+    | '/chorus'
+    | '/controller'
+    | '/sailing-quiz'
+    | '/sailing-vocab'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/board' | '/controller'
-  id: '__root__' | '/' | '/board' | '/controller'
+  to:
+    | '/'
+    | '/board'
+    | '/chants'
+    | '/chorus'
+    | '/controller'
+    | '/sailing-quiz'
+    | '/sailing-vocab'
+  id:
+    | '__root__'
+    | '/'
+    | '/board'
+    | '/chants'
+    | '/chorus'
+    | '/controller'
+    | '/sailing-quiz'
+    | '/sailing-vocab'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BoardRoute: typeof BoardRoute
+  ChantsRoute: typeof ChantsRoute
+  ChorusRoute: typeof ChorusRoute
   ControllerRoute: typeof ControllerRoute
+  SailingQuizRoute: typeof SailingQuizRoute
+  SailingVocabRoute: typeof SailingVocabRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sailing-vocab': {
+      id: '/sailing-vocab'
+      path: '/sailing-vocab'
+      fullPath: '/sailing-vocab'
+      preLoaderRoute: typeof SailingVocabRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sailing-quiz': {
+      id: '/sailing-quiz'
+      path: '/sailing-quiz'
+      fullPath: '/sailing-quiz'
+      preLoaderRoute: typeof SailingQuizRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/controller': {
       id: '/controller'
       path: '/controller'
       fullPath: '/controller'
       preLoaderRoute: typeof ControllerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chorus': {
+      id: '/chorus'
+      path: '/chorus'
+      fullPath: '/chorus'
+      preLoaderRoute: typeof ChorusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chants': {
+      id: '/chants'
+      path: '/chants'
+      fullPath: '/chants'
+      preLoaderRoute: typeof ChantsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/board': {
@@ -88,7 +178,11 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BoardRoute: BoardRoute,
+  ChantsRoute: ChantsRoute,
+  ChorusRoute: ChorusRoute,
   ControllerRoute: ControllerRoute,
+  SailingQuizRoute: SailingQuizRoute,
+  SailingVocabRoute: SailingVocabRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
