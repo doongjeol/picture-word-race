@@ -15,6 +15,9 @@ import { Route as ControllerRouteImport } from './routes/controller'
 import { Route as ChorusRouteImport } from './routes/chorus'
 import { Route as ChantsRouteImport } from './routes/chants'
 import { Route as BoardRouteImport } from './routes/board'
+import { Route as BingoSheetsRouteImport } from './routes/bingo-sheets'
+import { Route as BingoCallerRouteImport } from './routes/bingo-caller'
+import { Route as BingoAnswersRouteImport } from './routes/bingo-answers'
 import { Route as IndexRouteImport } from './routes/index'
 
 const SailingVocabRoute = SailingVocabRouteImport.update({
@@ -47,6 +50,21 @@ const BoardRoute = BoardRouteImport.update({
   path: '/board',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BingoSheetsRoute = BingoSheetsRouteImport.update({
+  id: '/bingo-sheets',
+  path: '/bingo-sheets',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BingoCallerRoute = BingoCallerRouteImport.update({
+  id: '/bingo-caller',
+  path: '/bingo-caller',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BingoAnswersRoute = BingoAnswersRouteImport.update({
+  id: '/bingo-answers',
+  path: '/bingo-answers',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -55,6 +73,9 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/bingo-answers': typeof BingoAnswersRoute
+  '/bingo-caller': typeof BingoCallerRoute
+  '/bingo-sheets': typeof BingoSheetsRoute
   '/board': typeof BoardRoute
   '/chants': typeof ChantsRoute
   '/chorus': typeof ChorusRoute
@@ -64,6 +85,9 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/bingo-answers': typeof BingoAnswersRoute
+  '/bingo-caller': typeof BingoCallerRoute
+  '/bingo-sheets': typeof BingoSheetsRoute
   '/board': typeof BoardRoute
   '/chants': typeof ChantsRoute
   '/chorus': typeof ChorusRoute
@@ -74,6 +98,9 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/bingo-answers': typeof BingoAnswersRoute
+  '/bingo-caller': typeof BingoCallerRoute
+  '/bingo-sheets': typeof BingoSheetsRoute
   '/board': typeof BoardRoute
   '/chants': typeof ChantsRoute
   '/chorus': typeof ChorusRoute
@@ -85,6 +112,9 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/bingo-answers'
+    | '/bingo-caller'
+    | '/bingo-sheets'
     | '/board'
     | '/chants'
     | '/chorus'
@@ -94,6 +124,9 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/bingo-answers'
+    | '/bingo-caller'
+    | '/bingo-sheets'
     | '/board'
     | '/chants'
     | '/chorus'
@@ -103,6 +136,9 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/bingo-answers'
+    | '/bingo-caller'
+    | '/bingo-sheets'
     | '/board'
     | '/chants'
     | '/chorus'
@@ -113,6 +149,9 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BingoAnswersRoute: typeof BingoAnswersRoute
+  BingoCallerRoute: typeof BingoCallerRoute
+  BingoSheetsRoute: typeof BingoSheetsRoute
   BoardRoute: typeof BoardRoute
   ChantsRoute: typeof ChantsRoute
   ChorusRoute: typeof ChorusRoute
@@ -165,6 +204,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BoardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bingo-sheets': {
+      id: '/bingo-sheets'
+      path: '/bingo-sheets'
+      fullPath: '/bingo-sheets'
+      preLoaderRoute: typeof BingoSheetsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bingo-caller': {
+      id: '/bingo-caller'
+      path: '/bingo-caller'
+      fullPath: '/bingo-caller'
+      preLoaderRoute: typeof BingoCallerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bingo-answers': {
+      id: '/bingo-answers'
+      path: '/bingo-answers'
+      fullPath: '/bingo-answers'
+      preLoaderRoute: typeof BingoAnswersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -177,6 +237,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BingoAnswersRoute: BingoAnswersRoute,
+  BingoCallerRoute: BingoCallerRoute,
+  BingoSheetsRoute: BingoSheetsRoute,
   BoardRoute: BoardRoute,
   ChantsRoute: ChantsRoute,
   ChorusRoute: ChorusRoute,

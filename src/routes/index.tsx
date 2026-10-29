@@ -56,6 +56,24 @@ function Index() {
           >
             🎤 찬양 후렴 배우기 (/chorus)
           </Link>
+          <Link
+            to="/bingo-caller"
+            className="rounded-2xl bg-gradient-to-br from-[oklch(0.72_0.15_150)] to-[oklch(0.58_0.18_165)] px-6 py-5 text-lg font-bold text-white shadow-lg transition hover:-translate-y-0.5"
+          >
+            🎧 그림 빙고 음원 재생기 (/bingo-caller)
+          </Link>
+          <Link
+            to="/bingo-sheets"
+            className="rounded-2xl bg-gradient-to-br from-[oklch(0.78_0.12_90)] to-[oklch(0.62_0.16_70)] px-6 py-5 text-lg font-bold text-white shadow-lg transition hover:-translate-y-0.5"
+          >
+            🖨️ 그림 빙고 학습지 (/bingo-sheets)
+          </Link>
+          <Link
+            to="/bingo-answers"
+            className="rounded-2xl bg-gradient-to-br from-[oklch(0.7_0.13_210)] to-[oklch(0.55_0.17_235)] px-6 py-5 text-lg font-bold text-white shadow-lg transition hover:-translate-y-0.5"
+          >
+            📖 그림 빙고 정답표 (/bingo-answers)
+          </Link>
         </div>
       </div>
     </div>
