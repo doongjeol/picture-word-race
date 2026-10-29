@@ -75,11 +75,14 @@ function BingoCaller() {
   }, []);
 
   return (
-    <div className="flex h-screen w-screen flex-col overflow-hidden bg-gradient-to-br from-[oklch(0.92_0.07_260)] via-[oklch(0.95_0.05_230)] to-[oklch(0.97_0.04_140)] p-4">
+    <div className="flex min-h-screen w-full flex-col overflow-y-auto bg-gradient-to-br from-[oklch(0.92_0.07_260)] via-[oklch(0.95_0.05_230)] to-[oklch(0.97_0.04_140)] p-3 sm:h-screen sm:w-screen sm:overflow-hidden sm:p-4">
       <audio ref={audioRef} />
 
       <div className="flex min-h-0 flex-1 flex-col">
-        <div className="mb-3 flex shrink-0 items-center justify-between">
+        <div className="mb-3 flex shrink-0 flex-wrap items-center justify-center gap-2 sm:flex-nowrap sm:justify-between">
+          <h1 className="order-first w-full text-center text-lg font-black text-foreground sm:order-none sm:w-auto sm:text-xl">
+            🎧 빙고 음원 재생기
+          </h1>
           <Link
             to="/"
             className="flex items-center gap-1 rounded-full bg-white/70 px-3 py-1.5 text-sm font-bold text-foreground shadow-md backdrop-blur transition hover:bg-white"
@@ -87,23 +90,20 @@ function BingoCaller() {
             <Home className="size-4" />
             <span>홈으로</span>
           </Link>
-          <h1 className="text-lg font-black text-foreground sm:text-xl">🎧 빙고 음원 재생기</h1>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={shuffleNumbers}
-              className="flex items-center gap-1 rounded-full bg-white/70 px-3 py-1.5 text-sm font-bold text-foreground shadow-md backdrop-blur transition hover:bg-white"
-            >
-              <Dices className="size-4" />
-              <span>번호 섞기</span>
-            </button>
-            <button
-              onClick={reset}
-              className="flex items-center gap-1 rounded-full bg-white/70 px-3 py-1.5 text-sm font-bold text-foreground shadow-md backdrop-blur transition hover:bg-white"
-            >
-              <RotateCcw className="size-4" />
-              <span>다시 시작</span>
-            </button>
-          </div>
+          <button
+            onClick={shuffleNumbers}
+            className="flex items-center gap-1 rounded-full bg-white/70 px-3 py-1.5 text-sm font-bold text-foreground shadow-md backdrop-blur transition hover:bg-white"
+          >
+            <Dices className="size-4" />
+            <span>번호 섞기</span>
+          </button>
+          <button
+            onClick={reset}
+            className="flex items-center gap-1 rounded-full bg-white/70 px-3 py-1.5 text-sm font-bold text-foreground shadow-md backdrop-blur transition hover:bg-white"
+          >
+            <RotateCcw className="size-4" />
+            <span>다시 시작</span>
+          </button>
         </div>
 
         <div className="mb-3 shrink-0 rounded-2xl bg-white/85 p-3 text-center shadow-[var(--shadow-pop)] backdrop-blur">
@@ -114,15 +114,15 @@ function BingoCaller() {
             <button
               onClick={callNext}
               disabled={remainingPositions.length === 0}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-[oklch(0.75_0.14_250)] to-[oklch(0.6_0.19_270)] px-5 py-2.5 text-lg font-black text-white shadow-lg transition hover:-translate-y-0.5 disabled:pointer-events-none disabled:opacity-40"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-[oklch(0.75_0.14_250)] to-[oklch(0.6_0.19_270)] px-4 py-2 text-base font-black text-white shadow-lg transition hover:-translate-y-0.5 disabled:pointer-events-none disabled:opacity-40 sm:px-5 sm:py-2.5 sm:text-lg"
             >
-              <Shuffle className="size-5" />
+              <Shuffle className="size-4 sm:size-5" />
               다음 문제 듣기
             </button>
             <button
               onClick={replayCurrent}
               disabled={currentPos === null}
-              className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-base font-bold text-foreground shadow-md transition hover:-translate-y-0.5 disabled:pointer-events-none disabled:opacity-40"
+              className="inline-flex items-center gap-2 rounded-xl bg-white px-3.5 py-2 text-sm font-bold text-foreground shadow-md transition hover:-translate-y-0.5 disabled:pointer-events-none disabled:opacity-40 sm:px-4 sm:py-2.5 sm:text-base"
             >
               <Repeat className="size-4" />
               다시 듣기
@@ -132,7 +132,7 @@ function BingoCaller() {
                 currentPos !== null && setSelected(itemById.get(assignment[currentPos]) ?? null)
               }
               disabled={currentPos === null}
-              className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-base font-bold text-foreground shadow-md transition hover:-translate-y-0.5 disabled:pointer-events-none disabled:opacity-40"
+              className="inline-flex items-center gap-2 rounded-xl bg-white px-3.5 py-2 text-sm font-bold text-foreground shadow-md transition hover:-translate-y-0.5 disabled:pointer-events-none disabled:opacity-40 sm:px-4 sm:py-2.5 sm:text-base"
             >
               <Eye className="size-4" />
               삽화 보기
@@ -143,7 +143,7 @@ function BingoCaller() {
           )}
         </div>
 
-        <div className="grid min-h-0 flex-1 grid-cols-6 grid-rows-3 gap-2">
+        <div className="grid min-h-0 flex-1 grid-cols-3 gap-2 sm:grid-cols-6 sm:grid-rows-3">
           {assignment.map((itemId, pos) => {
             const item = itemById.get(itemId);
             if (!item) return null;
@@ -152,7 +152,7 @@ function BingoCaller() {
             return (
               <div
                 key={pos}
-                className={`relative flex min-h-0 flex-col items-center justify-center rounded-xl border-2 shadow-sm transition ${
+                className={`relative flex aspect-square min-h-0 flex-col items-center justify-center rounded-xl border-2 shadow-sm transition sm:aspect-auto ${
                   isCurrent
                     ? "border-[oklch(0.6_0.19_270)] bg-[oklch(0.6_0.19_270)]"
                     : called
@@ -162,11 +162,11 @@ function BingoCaller() {
               >
                 <button
                   onClick={() => playPosition(pos)}
-                  className={`flex size-full flex-col items-center justify-center text-3xl font-black transition hover:-translate-y-0.5 ${
+                  className={`flex size-full flex-col items-center justify-center text-2xl font-black transition hover:-translate-y-0.5 sm:text-3xl ${
                     isCurrent ? "text-white" : called ? "text-muted-foreground" : "text-foreground"
                   }`}
                 >
-                  <Play className="mb-1 size-8" />
+                  <Play className="mb-1 size-6 sm:size-8" />
                   {pos + 1}
                 </button>
                 <button
@@ -175,11 +175,11 @@ function BingoCaller() {
                     setSelected(item);
                   }}
                   title="그림/문장 보기"
-                  className={`absolute right-1 top-1 flex size-9 items-center justify-center rounded-full shadow transition hover:scale-110 ${
+                  className={`absolute right-1 top-1 flex size-7 items-center justify-center rounded-full shadow transition hover:scale-110 sm:size-9 ${
                     isCurrent ? "bg-white/90 text-foreground" : "bg-foreground/10 text-foreground"
                   }`}
                 >
-                  <Eye className="size-5" />
+                  <Eye className="size-4 sm:size-5" />
                 </button>
               </div>
             );
@@ -195,7 +195,7 @@ function BingoCaller() {
 
       {selected && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 sm:p-6"
           onClick={() => setSelected(null)}
         >
           <div
@@ -204,12 +204,14 @@ function BingoCaller() {
           >
             <button
               onClick={() => setSelected(null)}
-              className="absolute right-4 top-4 z-10 flex size-12 items-center justify-center rounded-full bg-white/90 text-foreground shadow-md transition hover:bg-white"
+              className="absolute right-2 top-2 z-10 flex size-9 items-center justify-center rounded-full bg-white/90 text-foreground shadow-md transition hover:bg-white sm:right-4 sm:top-4 sm:size-12"
             >
-              <X className="size-7" />
+              <X className="size-5 sm:size-7" />
             </button>
-            <img src={selected.img} alt="" className="max-h-[75vh] w-full object-contain" />
-            <p className="p-6 text-center text-6xl font-black text-foreground">{selected.caption}</p>
+            <img src={selected.img} alt="" className="max-h-[60vh] w-full object-contain sm:max-h-[75vh]" />
+            <p className="p-4 text-center text-xl font-black text-foreground sm:p-6 sm:text-4xl md:text-6xl">
+              {selected.caption}
+            </p>
           </div>
         </div>
       )}
