@@ -14,9 +14,12 @@ function BingoAnswers() {
   const [revealedIds, setRevealedIds] = useState<Set<number>>(new Set());
   const [rangeStart, setRangeStart] = useState(1);
   const [rangeEnd, setRangeEnd] = useState(ITEMS.length);
+  const [repeatCount, setRepeatCount] = useState(1);
   const audioRef = useRef<HTMLAudioElement>(null);
   const playIndexRef = useRef(0);
+  const playStartIndexRef = useRef(0);
   const playEndIndexRef = useRef(ITEMS.length - 1);
+  const repeatRemainingRef = useRef(1);
   const playModeRef = useRef<"sequential" | "single">("sequential");
 
   useEffect(() => {
@@ -36,7 +39,7 @@ function BingoAnswers() {
 
   const playFrom = (index: number) => {
     const item = ITEMS[index];
-    if (!item || index > playEndIndexRef.current || !audioRef.current) {
+    if (!item || !audioRef.current) {
       stopPlayback();
       return;
     }
@@ -49,7 +52,9 @@ function BingoAnswers() {
 
   const startPlayback = () => {
     playModeRef.current = "sequential";
+    playStartIndexRef.current = 0;
     playEndIndexRef.current = ITEMS.length - 1;
+    repeatRemainingRef.current = 1;
     playFrom(0);
   };
 
@@ -57,7 +62,9 @@ function BingoAnswers() {
     const start = Math.min(rangeStart, rangeEnd);
     const end = Math.max(rangeStart, rangeEnd);
     playModeRef.current = "sequential";
+    playStartIndexRef.current = start - 1;
     playEndIndexRef.current = end - 1;
+    repeatRemainingRef.current = Math.max(1, repeatCount);
     playFrom(start - 1);
   };
 
@@ -71,10 +78,20 @@ function BingoAnswers() {
   };
 
   const handleAudioEnded = () => {
-    if (playModeRef.current === "sequential") {
-      playFrom(playIndexRef.current + 1);
-    } else {
+    if (playModeRef.current !== "sequential") {
       setPlayingId(null);
+      return;
+    }
+    const nextIndex = playIndexRef.current + 1;
+    if (nextIndex <= playEndIndexRef.current) {
+      playFrom(nextIndex);
+      return;
+    }
+    repeatRemainingRef.current -= 1;
+    if (repeatRemainingRef.current > 0) {
+      playFrom(playStartIndexRef.current);
+    } else {
+      stopPlayback();
     }
   };
 
@@ -135,6 +152,16 @@ function BingoAnswers() {
                     </option>
                   ))}
                 </select>
+                <span className="text-sm font-bold text-foreground">×</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={99}
+                  value={repeatCount}
+                  onChange={(e) => setRepeatCount(Math.max(1, Number(e.target.value) || 1))}
+                  className="w-12 rounded-md bg-muted px-1.5 py-1 text-center text-sm font-bold text-foreground"
+                />
+                <span className="text-sm font-bold text-foreground">회</span>
                 <button
                   onClick={startRangePlayback}
                   className="flex items-center gap-1 rounded-full bg-[oklch(0.6_0.19_270)] px-3 py-1.5 text-sm font-bold text-white transition hover:opacity-90"
