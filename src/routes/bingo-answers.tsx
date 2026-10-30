@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Home, Play, Square, X } from "lucide-react";
+import { Home, Pause, Play, Square, X } from "lucide-react";
 import { LESSON30_STORY as ITEMS, type StoryItem } from "@/game/lesson30Story";
 
 export const Route = createFileRoute("/bingo-answers")({
@@ -12,6 +12,7 @@ function BingoAnswers() {
   const [playingId, setPlayingId] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const playIndexRef = useRef(0);
+  const playModeRef = useRef<"all" | "single">("all");
 
   useEffect(() => {
     if (!selected) return;
@@ -34,6 +35,7 @@ function BingoAnswers() {
       stopPlayback();
       return;
     }
+    playModeRef.current = "all";
     playIndexRef.current = index;
     setPlayingId(item.id);
     audioRef.current.src = item.audio;
@@ -45,8 +47,21 @@ function BingoAnswers() {
     playFrom(0);
   };
 
+  const playSingle = (item: StoryItem) => {
+    if (!audioRef.current) return;
+    playModeRef.current = "single";
+    setPlayingId(item.id);
+    audioRef.current.src = item.audio;
+    audioRef.current.currentTime = 0;
+    void audioRef.current.play();
+  };
+
   const handleAudioEnded = () => {
-    playFrom(playIndexRef.current + 1);
+    if (playModeRef.current === "all") {
+      playFrom(playIndexRef.current + 1);
+    } else {
+      setPlayingId(null);
+    }
   };
 
   return (
@@ -92,9 +107,15 @@ function BingoAnswers() {
             >
               <img src={item.img} alt="" className="size-full object-cover" />
             </button>
-            <p className="min-w-0 text-sm font-semibold text-foreground sm:text-base">
+            <p className="min-w-0 flex-1 text-sm font-semibold text-foreground sm:text-base">
               {item.caption}
             </p>
+            <button
+              onClick={() => (playingId === item.id ? stopPlayback() : playSingle(item))}
+              className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-foreground transition hover:bg-[oklch(0.6_0.19_270)] hover:text-white sm:size-10"
+            >
+              {playingId === item.id ? <Pause className="size-4" /> : <Play className="size-4" />}
+            </button>
           </div>
         ))}
       </div>
