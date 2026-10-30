@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Home, Pause, Play, Square, X } from "lucide-react";
+import { Eye, EyeOff, Home, Pause, Play, Square, X } from "lucide-react";
 import { LESSON30_STORY as ITEMS, type StoryItem } from "@/game/lesson30Story";
 
 export const Route = createFileRoute("/bingo-answers")({
@@ -10,6 +10,8 @@ export const Route = createFileRoute("/bingo-answers")({
 function BingoAnswers() {
   const [selected, setSelected] = useState<StoryItem | null>(null);
   const [playingId, setPlayingId] = useState<number | null>(null);
+  const [maskEnabled, setMaskEnabled] = useState(false);
+  const [revealedIds, setRevealedIds] = useState<Set<number>>(new Set());
   const audioRef = useRef<HTMLAudioElement>(null);
   const playIndexRef = useRef(0);
   const playModeRef = useRef<"all" | "single">("all");
@@ -64,6 +66,23 @@ function BingoAnswers() {
     }
   };
 
+  const toggleMaskAll = () => {
+    setMaskEnabled((prev) => !prev);
+    setRevealedIds(new Set());
+  };
+
+  const toggleReveal = (id: number) => {
+    setRevealedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-muted/30 p-3 sm:p-6">
       <div className="mb-4 flex flex-wrap items-center justify-center gap-2 sm:mb-6 sm:justify-between">
@@ -77,6 +96,13 @@ function BingoAnswers() {
           >
             {playingId === null ? <Play className="size-4" /> : <Square className="size-4" />}
             <span>{playingId === null ? "전체 재생" : "정지"}</span>
+          </button>
+          <button
+            onClick={toggleMaskAll}
+            className="flex items-center gap-1 rounded-full bg-white px-3 py-2 text-sm font-bold text-foreground shadow-md transition hover:bg-muted"
+          >
+            {maskEnabled ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
+            <span>{maskEnabled ? "전체 보이기" : "전체 가리기"}</span>
           </button>
           <Link
             to="/"
@@ -107,9 +133,22 @@ function BingoAnswers() {
             >
               <img src={item.img} alt="" className="size-full object-cover" />
             </button>
-            <p className="min-w-0 flex-1 text-sm font-semibold text-foreground sm:text-base">
-              {item.caption}
-            </p>
+            {(() => {
+              const isHidden = maskEnabled && !revealedIds.has(item.id);
+              return (
+                <button
+                  onClick={() => maskEnabled && toggleReveal(item.id)}
+                  disabled={!maskEnabled}
+                  className={`min-w-0 flex-1 rounded-lg text-left text-sm font-semibold text-foreground sm:text-base ${
+                    isHidden
+                      ? "cursor-pointer select-none rounded-md bg-foreground/80 py-1 text-transparent"
+                      : ""
+                  }`}
+                >
+                  {item.caption}
+                </button>
+              );
+            })()}
             <button
               onClick={() => (playingId === item.id ? stopPlayback() : playSingle(item))}
               className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-foreground transition hover:bg-[oklch(0.6_0.19_270)] hover:text-white sm:size-10"
