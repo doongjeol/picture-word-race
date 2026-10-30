@@ -12,9 +12,12 @@ function BingoAnswers() {
   const [playingId, setPlayingId] = useState<number | null>(null);
   const [maskEnabled, setMaskEnabled] = useState(false);
   const [revealedIds, setRevealedIds] = useState<Set<number>>(new Set());
+  const [rangeStart, setRangeStart] = useState(1);
+  const [rangeEnd, setRangeEnd] = useState(ITEMS.length);
   const audioRef = useRef<HTMLAudioElement>(null);
   const playIndexRef = useRef(0);
-  const playModeRef = useRef<"all" | "single">("all");
+  const playEndIndexRef = useRef(ITEMS.length - 1);
+  const playModeRef = useRef<"sequential" | "single">("sequential");
 
   useEffect(() => {
     if (!selected) return;
@@ -33,11 +36,10 @@ function BingoAnswers() {
 
   const playFrom = (index: number) => {
     const item = ITEMS[index];
-    if (!item || !audioRef.current) {
+    if (!item || index > playEndIndexRef.current || !audioRef.current) {
       stopPlayback();
       return;
     }
-    playModeRef.current = "all";
     playIndexRef.current = index;
     setPlayingId(item.id);
     audioRef.current.src = item.audio;
@@ -46,7 +48,17 @@ function BingoAnswers() {
   };
 
   const startPlayback = () => {
+    playModeRef.current = "sequential";
+    playEndIndexRef.current = ITEMS.length - 1;
     playFrom(0);
+  };
+
+  const startRangePlayback = () => {
+    const start = Math.min(rangeStart, rangeEnd);
+    const end = Math.max(rangeStart, rangeEnd);
+    playModeRef.current = "sequential";
+    playEndIndexRef.current = end - 1;
+    playFrom(start - 1);
   };
 
   const playSingle = (item: StoryItem) => {
@@ -59,7 +71,7 @@ function BingoAnswers() {
   };
 
   const handleAudioEnded = () => {
-    if (playModeRef.current === "all") {
+    if (playModeRef.current === "sequential") {
       playFrom(playIndexRef.current + 1);
     } else {
       setPlayingId(null);
@@ -89,14 +101,58 @@ function BingoAnswers() {
         <h1 className="order-first w-full text-center text-lg font-black text-foreground sm:order-none sm:w-auto sm:text-xl">
           📖 그림 빙고 정답표
         </h1>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={playingId === null ? startPlayback : stopPlayback}
-            className="flex items-center gap-1 rounded-full bg-[oklch(0.6_0.19_270)] px-3 py-2 text-sm font-bold text-white shadow-md transition hover:opacity-90"
-          >
-            {playingId === null ? <Play className="size-4" /> : <Square className="size-4" />}
-            <span>{playingId === null ? "전체 재생" : "정지"}</span>
-          </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {playingId === null ? (
+            <>
+              <button
+                onClick={startPlayback}
+                className="flex items-center gap-1 rounded-full bg-[oklch(0.6_0.19_270)] px-3 py-2 text-sm font-bold text-white shadow-md transition hover:opacity-90"
+              >
+                <Play className="size-4" />
+                <span>전체 재생</span>
+              </button>
+              <div className="flex items-center gap-1 rounded-full bg-white px-2 py-1 shadow-md">
+                <select
+                  value={rangeStart}
+                  onChange={(e) => setRangeStart(Number(e.target.value))}
+                  className="rounded-md bg-muted px-1.5 py-1 text-sm font-bold text-foreground"
+                >
+                  {ITEMS.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.id}
+                    </option>
+                  ))}
+                </select>
+                <span className="text-sm font-bold text-foreground">~</span>
+                <select
+                  value={rangeEnd}
+                  onChange={(e) => setRangeEnd(Number(e.target.value))}
+                  className="rounded-md bg-muted px-1.5 py-1 text-sm font-bold text-foreground"
+                >
+                  {ITEMS.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.id}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={startRangePlayback}
+                  className="flex items-center gap-1 rounded-full bg-[oklch(0.6_0.19_270)] px-3 py-1.5 text-sm font-bold text-white transition hover:opacity-90"
+                >
+                  <Play className="size-4" />
+                  <span>구간 재생</span>
+                </button>
+              </div>
+            </>
+          ) : (
+            <button
+              onClick={stopPlayback}
+              className="flex items-center gap-1 rounded-full bg-[oklch(0.6_0.19_270)] px-3 py-2 text-sm font-bold text-white shadow-md transition hover:opacity-90"
+            >
+              <Square className="size-4" />
+              <span>정지</span>
+            </button>
+          )}
           <button
             onClick={toggleMaskAll}
             className="flex items-center gap-1 rounded-full bg-white px-3 py-2 text-sm font-bold text-foreground shadow-md transition hover:bg-muted"
