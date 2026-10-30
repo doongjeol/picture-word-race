@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Home, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Home, Play, Square, X } from "lucide-react";
 import { LESSON30_STORY as ITEMS, type StoryItem } from "@/game/lesson30Story";
 
 export const Route = createFileRoute("/bingo-answers")({
@@ -9,6 +9,9 @@ export const Route = createFileRoute("/bingo-answers")({
 
 function BingoAnswers() {
   const [selected, setSelected] = useState<StoryItem | null>(null);
+  const [playingId, setPlayingId] = useState<number | null>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const playIndexRef = useRef(0);
 
   useEffect(() => {
     if (!selected) return;
@@ -19,26 +22,66 @@ function BingoAnswers() {
     return () => window.removeEventListener("keydown", onKey);
   }, [selected]);
 
+  const stopPlayback = () => {
+    playIndexRef.current = ITEMS.length;
+    setPlayingId(null);
+    audioRef.current?.pause();
+  };
+
+  const playFrom = (index: number) => {
+    const item = ITEMS[index];
+    if (!item || !audioRef.current) {
+      stopPlayback();
+      return;
+    }
+    playIndexRef.current = index;
+    setPlayingId(item.id);
+    audioRef.current.src = item.audio;
+    audioRef.current.currentTime = 0;
+    void audioRef.current.play();
+  };
+
+  const startPlayback = () => {
+    playFrom(0);
+  };
+
+  const handleAudioEnded = () => {
+    playFrom(playIndexRef.current + 1);
+  };
+
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-muted/30 p-3 sm:p-6">
       <div className="mb-4 flex flex-wrap items-center justify-center gap-2 sm:mb-6 sm:justify-between">
         <h1 className="order-first w-full text-center text-lg font-black text-foreground sm:order-none sm:w-auto sm:text-xl">
           📖 그림 빙고 정답표
         </h1>
-        <Link
-          to="/"
-          className="flex items-center gap-1 rounded-full bg-white px-3 py-2 text-sm font-bold text-foreground shadow-md transition hover:bg-muted"
-        >
-          <Home className="size-4" />
-          <span>홈으로</span>
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={playingId === null ? startPlayback : stopPlayback}
+            className="flex items-center gap-1 rounded-full bg-[oklch(0.6_0.19_270)] px-3 py-2 text-sm font-bold text-white shadow-md transition hover:opacity-90"
+          >
+            {playingId === null ? <Play className="size-4" /> : <Square className="size-4" />}
+            <span>{playingId === null ? "전체 재생" : "정지"}</span>
+          </button>
+          <Link
+            to="/"
+            className="flex items-center gap-1 rounded-full bg-white px-3 py-2 text-sm font-bold text-foreground shadow-md transition hover:bg-muted"
+          >
+            <Home className="size-4" />
+            <span>홈으로</span>
+          </Link>
+        </div>
       </div>
 
       <div className="mx-auto grid max-w-5xl gap-3 sm:grid-cols-2 sm:gap-4">
         {ITEMS.map((item) => (
           <div
             key={item.id}
-            className="flex items-center gap-3 rounded-2xl border border-border bg-white p-3 shadow-sm sm:gap-4 sm:p-4"
+            className={`flex items-center gap-3 rounded-2xl border p-3 shadow-sm transition sm:gap-4 sm:p-4 ${
+              playingId === item.id
+                ? "border-[oklch(0.6_0.19_270)] bg-[oklch(0.6_0.19_270)]/10"
+                : "border-border bg-white"
+            }`}
           >
             <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-black text-foreground sm:size-10">
               {item.id}
@@ -78,6 +121,8 @@ function BingoAnswers() {
           </div>
         </div>
       )}
+
+      <audio ref={audioRef} onEnded={handleAudioEnded} />
     </div>
   );
 }
