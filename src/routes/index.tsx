@@ -74,6 +74,12 @@ function Index() {
           >
             📖 그림 빙고 정답표 (/bingo-answers)
           </Link>
+          <Link
+            to="/bingo-slides"
+            className="rounded-2xl bg-gradient-to-br from-[oklch(0.76_0.13_270)] to-[oklch(0.6_0.17_290)] px-6 py-5 text-lg font-bold text-white shadow-lg transition hover:-translate-y-0.5"
+          >
+            🎬 그림 빙고 슬라이드 (/bingo-slides)
+          </Link>
         </div>
       </div>
     </div>
